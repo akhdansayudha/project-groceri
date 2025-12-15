@@ -1,0 +1,291 @@
+/* --- Variables & Reset --- */
+:root {
+    --bg-color: #ffffff;
+    --text-main: #111111;
+    --text-sec: #666666;
+    --accent: #f4f4f4;
+    --border-radius: 24px;
+    --font-main: 'Plus Jakarta Sans', sans-serif;
+    --container-width: 1280px;
+    --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; cursor: none; /* Hide default cursor */ }
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    overflow-x: hidden;
+    line-height: 1.5;
+}
+
+a { text-decoration: none; color: inherit; cursor: none; }
+ul { list-style: none; }
+
+/* --- Custom Cursor --- */
+.cursor-dot, .cursor-outline {
+    position: fixed;
+    top: 0; left: 0;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    z-index: 9999;
+    pointer-events: none;
+}
+.cursor-dot { width: 8px; height: 8px; background-color: black; }
+.cursor-outline {
+    width: 40px; height: 40px;
+    border: 1px solid rgba(0,0,0,0.2);
+    transition: width 0.2s, height 0.2s, background-color 0.2s;
+}
+/* Cursor Hover State */
+body.hovering .cursor-outline {
+    width: 60px; height: 60px;
+    background-color: rgba(0,0,0,0.05);
+    border-color: transparent;
+}
+
+/* --- Layout Utility --- */
+.container {
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+.section-padding { padding: 100px 0; }
+.bento-grid {
+    display: grid;
+    gap: 20px;
+}
+.bento-item {
+    background: var(--accent);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    transition: var(--transition);
+}
+.badge {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    padding-left: 20px;
+    position: relative;
+}
+.badge::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: black;
+    border-radius: 50%;
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+}
+
+/* --- Navbar --- */
+.navbar {
+    padding: 20px 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 100;
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(10px);
+}
+.navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo { font-weight: 800; font-size: 24px; letter-spacing: -1px; }
+.nav-links { display: flex; gap: 40px; }
+.nav-link { font-weight: 500; font-size: 16px; position: relative; }
+
+/* Mega Menu / Modal Hover */
+.has-dropdown { position: relative; }
+.mega-menu {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    width: 600px;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    background: white;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+    border-radius: 20px;
+    padding: 10px;
+    border: 1px solid #eee;
+}
+.has-dropdown:hover .mega-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+.mega-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.5fr;
+    gap: 20px;
+}
+.mega-column { display: flex; flex-direction: column; gap: 10px; padding: 15px; }
+.mega-column h4 { font-size: 12px; text-transform: uppercase; color: #999; margin-bottom: 5px; }
+.mega-column a { font-size: 15px; transition: 0.2s; }
+.mega-column a:hover { padding-left: 5px; color: #000; }
+.featured-mega .mega-card {
+    background: #f4f4f4;
+    height: 100%;
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+/* Client Login Button */
+.btn-login {
+    padding: 10px 24px;
+    border: 1px solid #eee;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    background: white;
+    transition: var(--transition);
+}
+.btn-login:hover { background: black; color: white; border-color: black; }
+
+/* --- Hero --- */
+.hero-section { padding: 180px 0 100px; text-align: center; }
+.hero-content h1 {
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    line-height: 1.1;
+    letter-spacing: -2px;
+    margin-bottom: 2rem;
+}
+.hero-sub { max-width: 600px; margin: 0 auto 3rem; font-size: 1.2rem; color: var(--text-sec); }
+.btn-primary {
+    background: black;
+    color: white;
+    padding: 16px 32px;
+    border-radius: 50px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+/* Infinite Text */
+.infinite-text-wrapper {
+    margin-top: 80px;
+    overflow: hidden;
+    white-space: nowrap;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    padding: 20px 0;
+}
+.infinite-text {
+    font-size: 18px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #ccc;
+    animation: scroll 20s linear infinite;
+}
+@keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* --- Who We Are (Bento) --- */
+.who-we-are-grid {
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 250px 200px;
+}
+.large-box { grid-column: 1 / 2; grid-row: 1 / 2; }
+.image-box { grid-column: 2 / 3; grid-row: 1 / 3; background: #333; color: white; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.stat-box { display: flex; flex-direction: column; justify-content: center; }
+.stat-box h3 { font-size: 3rem; margin-bottom: 5px; }
+
+/* --- Works --- */
+.work-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 80px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid #eee;
+}
+.work-item.reverse { flex-direction: row-reverse; }
+.work-info { width: 40%; }
+.work-image { width: 50%; height: 400px; border-radius: var(--border-radius); overflow: hidden; }
+.img-placeholder { width: 100%; height: 100%; transition: transform 0.6s ease; }
+.work-image:hover .img-placeholder { transform: scale(1.05); }
+.work-cat { font-size: 14px; color: #999; margin-bottom: 10px; display: block; }
+.work-info h3 { font-size: 2.5rem; margin-bottom: 20px; }
+.work-tags span {
+    display: inline-block;
+    padding: 5px 15px;
+    border: 1px solid #eee;
+    border-radius: 20px;
+    font-size: 12px;
+    margin-right: 10px;
+}
+
+/* --- Services List --- */
+.services-list { margin-top: 40px; }
+.service-row {
+    display: flex;
+    align-items: center;
+    padding: 30px 0;
+    border-bottom: 1px solid #eee;
+    transition: 0.3s;
+}
+.service-row:hover { padding-left: 20px; }
+.service-row .num { font-size: 14px; width: 50px; color: #999; }
+.service-row h3 { flex-grow: 1; font-size: 2rem; font-weight: 400; }
+.service-row .arrow { opacity: 0; transform: translateX(-10px); transition: 0.3s; }
+.service-row:hover .arrow { opacity: 1; transform: translateX(0); }
+
+/* --- Contact / Explorer --- */
+.explorer-card {
+    background: #f4f4f4;
+    text-align: center;
+    padding: 80px 20px;
+}
+.contact-form { max-width: 500px; margin: 40px auto 0; }
+.form-group { display: flex; gap: 10px; margin-bottom: 20px; }
+.form-input {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    outline: none;
+}
+
+/* --- Footer --- */
+.footer-top { grid-template-columns: 2fr 1fr 1fr; }
+.footer h4 { margin-bottom: 20px; font-size: 14px; opacity: 0.5; }
+.footer ul li { margin-bottom: 10px; }
+.footer-bottom { 
+    margin-top: 50px; 
+    padding-top: 20px; 
+    border-top: 1px solid #eee; 
+    display: flex; 
+    justify-content: space-between; 
+    font-size: 14px; color: #999; 
+}
+.legal a { margin-left: 20px; }
+
+/* --- Scroll Animation (Reveal) --- */
+.reveal, .reveal-text {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease-out;
+}
+.reveal.active, .reveal-text.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+.delay-1 { transition-delay: 0.1s; }
+.delay-2 { transition-delay: 0.2s; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .who-we-are-grid, .mega-content, .footer-top { grid-template-columns: 1fr; grid-template-rows: auto; }
+    .work-item, .work-item.reverse { flex-direction: column; gap: 20px; }
+    .work-info, .work-image { width: 100%; }
+    .hero-content h1 { font-size: 3rem; }
+    .nav-links { display: none; } /* Simplified mobile menu hiding */
+}

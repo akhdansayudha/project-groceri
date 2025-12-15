@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap');
+
+/* --- BASE --- */
+html {
+    scroll-behavior: smooth; /* Membuat efek scroll halus saat klik link anchor */
+}
+
+* {
+    cursor: none !important; 
+}
+
+body {
+    font-family: 'Manrope', sans-serif;
+    background-color: #F3F4F6;
+    color: #111;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* --- STABLE DOT CURSOR --- */
+.cursor-dot {
+    width: 15px;
+    height: 15px;
+    background-color: #000;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 100000;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s linear; /* Ubah ke linear agar lebih responsif saat scroll check */
+    mix-blend-mode: normal;
+}
+
+body.hovering .cursor-dot {
+    transform: translate(-50%, -50%) scale(2.5);
+    background-color: rgba(0, 0, 0, 0.1);
+    border-color: #000;
+    backdrop-filter: blur(2px);
+}
+
+body.on-dark .cursor-dot {
+    background-color: #fff;
+    border-color: transparent;
+}
+
+/* --- BUTTONS --- */
+.btn-invert {
+    transition: all 0.3s ease;
+    cursor: none;
+}
+.btn-black { background-color: #000; color: #fff; border: 1px solid #000; }
+.btn-black:hover { background-color: #fff; color: #000; }
+
+/* --- MARQUEE --- */
+.marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    padding: 20px 0;
+    border-top: 1px solid #f3f4f6;
+    z-index: 20;
+}
+.marquee-content {
+    display: inline-block;
+    animation: marquee 25s linear infinite;
+    will-change: transform;
+}
+@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+/* --- NAVBAR MENU --- */
+.group:hover .mega-menu {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.mega-menu {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateX(-50%) translateY(10px);
+}
+
+/* --- SCROLL REVEAL --- */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+}
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- TESTIMONIAL SLIDER CSS --- */
+.testimonial-track {
+    display: flex;
+    transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.testimonial-item {
+    min-width: 100%;
+    flex-shrink: 0;
+}
+/* Hide scrollbar for slider container */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Untuk Microsoft Edge */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
+/* Untuk Chrome / Webkit browsers */
+input[type="password"]::-webkit-contacts-auto-fill-button,
+input[type="password"]::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+}
