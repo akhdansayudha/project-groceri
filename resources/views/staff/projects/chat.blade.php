@@ -1,53 +1,71 @@
-@extends('client.layouts.app')
+@extends('staff.layouts.app')
 
 @section('content')
     <div class="max-w-4xl mx-auto fade-in h-[calc(100vh-140px)] flex flex-col">
 
-        {{-- HEADER --}}
+        {{-- HEADER CHAT --}}
         <div
-            class="bg-white px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 rounded-t-3xl shadow-sm z-20 relative">
+            class="bg-white px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 rounded-t-3xl shadow-sm z-10">
 
-            {{-- KIRI: Info Project --}}
+            {{-- KIRI: Info Project & Navigation --}}
             <div class="flex items-center gap-4 w-full md:w-auto">
-                <a href="{{ route('client.requests.show', $task->id) }}"
+                <a href="{{ route('staff.projects.show', $task->id) }}"
                     class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors flex-shrink-0">
                     <i data-feather="arrow-left" class="w-4 h-4 text-gray-600"></i>
                 </a>
-                <div class="min-w-0">
-                    <h1 class="font-bold text-lg text-gray-900 leading-tight truncate">{{ $task->title }}</h1>
-                    <div class="flex items-center gap-2 text-xs text-gray-500">
-                        <span
-                            class="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">#{{ substr($task->id, 0, 8) }}</span>
-                        <span class="hidden sm:inline">•</span>
-                        <span class="truncate">{{ $task->service->name }}</span>
+
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="relative flex-shrink-0">
+                        <img src="{{ $task->user->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($task->user->full_name) }}"
+                            class="w-10 h-10 rounded-full border border-gray-100">
+
+                        {{-- Dot Indikator di Avatar Client --}}
+                        @if ($isClientOnline)
+                            <div
+                                class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full animate-pulse">
+                            </div>
+                        @else
+                            <div class="absolute bottom-0 right-0 w-3 h-3 bg-gray-400 border-2 border-white rounded-full">
+                            </div>
+                        @endif
+                    </div>
+                    <div class="min-w-0">
+                        <h1 class="font-bold text-gray-900 leading-tight truncate">{{ Str::limit($task->title, 30) }}</h1>
+                        <div class="flex items-center gap-2 text-xs text-gray-500">
+                            <span class="font-mono">#{{ substr($task->id, 0, 8) }}</span>
+                            <span class="hidden sm:inline">•</span>
+                            <span class="truncate">{{ $task->user->full_name }}</span>
+                            @if ($task->status === 'completed')
+                                <span
+                                    class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold ml-1">Closed</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {{-- KANAN: Status Monitor (Staff & Admin) --}}
-            <div class="flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-full border border-gray-100 shadow-sm">
-
-                {{-- Status Staff --}}
-                <div class="flex items-center gap-2" title="Assigned Staff Status">
-                    @if ($isStaffOnline ?? false)
+            {{-- KANAN: Status Monitor (Client & Admin) --}}
+            <div class="flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+                {{-- Status Client --}}
+                <div class="flex items-center gap-2" title="Client Status">
+                    @if ($isClientOnline)
                         <span class="relative flex h-2 w-2">
                             <span
                                 class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                         </span>
-                        <span class="text-[10px] font-bold text-green-700 uppercase">Staff ON</span>
+                        <span class="text-[10px] font-bold text-green-700 uppercase">Client ON</span>
                     @else
                         <span class="w-2 h-2 bg-gray-300 rounded-full"></span>
-                        <span class="text-[10px] font-bold text-gray-400 uppercase">Staff OFF</span>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">Client OFF</span>
                     @endif
                 </div>
 
-                {{-- Separator --}}
                 <div class="w-px h-4 bg-gray-200"></div>
 
                 {{-- Status Admin --}}
                 <div class="flex items-center gap-2" title="Admin Status">
-                    @if ($isAdminOnline ?? false)
+                    @if ($isAdminOnline)
                         <span class="relative flex h-2 w-2">
                             <span
                                 class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -59,36 +77,41 @@
                         <span class="text-[10px] font-bold text-gray-400 uppercase">Admin OFF</span>
                     @endif
                 </div>
-
             </div>
         </div>
 
         {{-- CHAT BODY --}}
-        <div class="flex-1 bg-gray-50 p-6 overflow-y-auto custom-scrollbar" id="chat-container">
+        <div class="flex-1 bg-gray-50 p-6 overflow-y-auto space-y-6 custom-scrollbar" id="chat-container">
 
-            {{-- Welcome Message --}}
-            <div class="flex justify-center mb-6">
+            {{-- Welcome --}}
+            <div class="flex justify-center">
                 <div
-                    class="bg-white border border-gray-200 px-4 py-1.5 rounded-full text-[10px] text-gray-400 font-medium shadow-sm uppercase tracking-wide">
-                    Project Started: {{ $task->created_at->format('d M Y') }}
+                    class="bg-white border border-gray-200 px-4 py-2 rounded-full text-[10px] text-gray-400 font-medium shadow-sm uppercase tracking-wide">
+                    Project Discussion Room
                 </div>
             </div>
 
-            @php
-                $lastDate = null;
-            @endphp
-
             @forelse($task->messages as $msg)
                 @php
+                    // Logic Cek Pengirim (Apakah saya?)
                     $isMe = $msg->sender_id === Auth::id();
+                    $senderRole = $msg->user->role ?? 'unknown';
 
                     // Logic Deteksi Pesan Revisi
                     $isRevisionMsg = Str::startsWith($msg->content, 'REVISION REQUESTED:');
                     $cleanContent = str_replace('REVISION REQUESTED:', '', $msg->content);
+
+                    // Styling Label Role
+                    $roleBadge = match ($senderRole) {
+                        'client' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'label' => 'Client'],
+                        'admin' => ['bg' => 'bg-black', 'text' => 'text-white', 'label' => 'Admin'],
+                        'staff' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'label' => 'Staff'],
+                        default => ['bg' => 'bg-gray-100', 'text' => 'text-gray-600', 'label' => 'User'],
+                    };
                 @endphp
 
-                {{-- TAMPILAN KHUSUS UNTUK REVISION NOTES --}}
                 @if ($isRevisionMsg)
+                    {{-- TAMPILAN KHUSUS UNTUK REVISION NOTES (Orange Alert) --}}
                     <div class="flex justify-center mb-6 mt-2 fade-in">
                         <div
                             class="bg-orange-50 border border-orange-200 rounded-2xl p-5 max-w-[90%] w-full shadow-sm relative overflow-hidden">
@@ -119,41 +142,38 @@
                             </div>
                         </div>
                     </div>
-
-                    {{-- TAMPILAN CHAT BIASA (ELSE) --}}
                 @else
-                    <div class="flex w-full mb-4 {{ $isMe ? 'justify-end' : 'justify-start' }}">
+                    {{-- TAMPILAN CHAT BIASA --}}
+                    <div class="flex w-full {{ $isMe ? 'justify-end' : 'justify-start' }}">
                         <div class="flex max-w-[85%] md:max-w-[75%] gap-3 {{ $isMe ? 'flex-row-reverse' : 'flex-row' }}">
 
-                            {{-- Avatar --}}
+                            {{-- Avatar Pengirim --}}
                             <div class="flex-shrink-0">
-                                @if ($isMe)
-                                    <div class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
-                                        <img src="{{ Auth::user()->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->full_name) }}"
-                                            class="w-full h-full object-cover">
-                                    </div>
-                                @else
-                                    <div
-                                        class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden">
-                                        <img src="{{ $msg->user->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($msg->user->full_name) }}"
-                                            class="w-full h-full object-cover">
-                                    </div>
-                                @endif
+                                <img src="{{ $msg->user->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($msg->user->full_name) }}"
+                                    class="w-8 h-8 rounded-full bg-gray-200 object-cover border border-gray-300">
                             </div>
 
                             <div>
-                                {{-- Name Label --}}
-                                <div class="flex items-end gap-2 mb-1 {{ $isMe ? 'justify-end' : '' }}">
-                                    <span class="text-[10px] text-gray-400 font-bold">
-                                        {{ $isMe ? 'You' : $msg->user->full_name }}
-                                    </span>
+                                {{-- Nama & Role --}}
+                                <div class="flex items-center gap-2 mb-1 {{ $isMe ? 'justify-end' : 'justify-start' }}">
+                                    @if (!$isMe)
+                                        <span
+                                            class="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase {{ $roleBadge['bg'] }} {{ $roleBadge['text'] }}">
+                                            {{ $roleBadge['label'] }}
+                                        </span>
+                                        <span class="text-xs text-gray-500 font-bold">
+                                            {{ $msg->user->full_name }}
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-gray-400 font-bold">You</span>
+                                    @endif
                                 </div>
 
                                 {{-- Bubble Chat --}}
                                 <div
-                                    class="relative px-4 py-3 shadow-sm text-sm leading-relaxed break-words
+                                    class="relative px-5 py-3 shadow-sm text-sm leading-relaxed
                                     {{ $isMe
-                                        ? 'bg-black text-white rounded-2xl rounded-tr-sm'
+                                        ? 'bg-purple-600 text-white rounded-2xl rounded-tr-sm'
                                         : 'bg-white text-gray-800 border border-gray-200 rounded-2xl rounded-tl-sm' }}">
 
                                     @if ($msg->content)
@@ -162,16 +182,17 @@
 
                                     @if ($msg->attachment_url)
                                         <div
-                                            class="mt-2 pt-2 border-t {{ $isMe ? 'border-gray-700' : 'border-gray-100' }}">
+                                            class="mt-2 pt-2 border-t {{ $isMe ? 'border-purple-400' : 'border-gray-100' }}">
                                             @php
-                                                $fileLink = str_starts_with($msg->attachment_url, 'http')
-                                                    ? $msg->attachment_url
-                                                    : \Illuminate\Support\Facades\Storage::disk('supabase')->url(
-                                                        $msg->attachment_url,
+                                                $link = $msg->attachment_url;
+                                                if (!str_starts_with($link, 'http')) {
+                                                    $link = \Illuminate\Support\Facades\Storage::disk('supabase')->url(
+                                                        $link,
                                                     );
+                                                }
                                             @endphp
-                                            <a href="{{ $fileLink }}" target="_blank"
-                                                class="flex items-center gap-3 group p-1 rounded hover:bg-white/10 transition-colors">
+                                            <a href="{{ $link }}" target="_blank"
+                                                class="flex items-center gap-2 group">
                                                 <div
                                                     class="w-8 h-8 rounded bg-opacity-20 flex items-center justify-center {{ $isMe ? 'bg-white text-white' : 'bg-gray-100 text-gray-600' }}">
                                                     <i data-feather="file" class="w-4 h-4"></i>
@@ -180,7 +201,7 @@
                                                     <p
                                                         class="font-bold text-xs truncate max-w-[150px] group-hover:underline">
                                                         Attachment</p>
-                                                    <p class="text-[9px] opacity-70">Click to open</p>
+                                                    <p class="text-[9px] opacity-70">Click to view</p>
                                                 </div>
                                             </a>
                                         </div>
@@ -195,12 +216,11 @@
                     </div>
                 @endif
             @empty
-                {{-- Empty State --}}
-                <div class="flex flex-col items-center justify-center h-full pb-20">
-                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                        <i data-feather="message-square" class="w-6 h-6 text-gray-400"></i>
+                <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                    <div class="p-4 bg-gray-100 rounded-full mb-3">
+                        <i data-feather="message-square" class="w-6 h-6"></i>
                     </div>
-                    <p class="text-gray-500 font-medium text-sm">Belum ada pesan.</p>
+                    <p class="text-sm">No messages yet. Start the discussion!</p>
                 </div>
             @endforelse
 
@@ -208,8 +228,7 @@
         </div>
 
         {{-- FOOTER INPUT --}}
-        <div class="bg-white p-4 border-t border-gray-200 rounded-b-3xl relative z-20">
-
+        <div class="bg-white p-4 border-t border-gray-200 rounded-b-3xl">
             @if ($task->status === 'completed')
                 {{-- TAMPILAN JIKA PROJECT SELESAI --}}
                 <div
@@ -220,42 +239,34 @@
                 </div>
             @else
                 {{-- TAMPILAN FORM CHAT (JIKA AKTIF) --}}
-                <form action="{{ route('client.requests.chat.store', $task->id) }}" method="POST"
+                <form action="{{ route('staff.projects.chat.store', $task->id) }}" method="POST"
                     enctype="multipart/form-data" class="flex items-end gap-3">
                     @csrf
 
-                    {{-- Upload Button --}}
+                    {{-- Upload --}}
                     <label
-                        class="p-3 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-black hover:border-gray-300 cursor-pointer transition-all flex-shrink-0 group">
+                        class="p-3 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-black hover:border-black cursor-pointer transition-all flex-shrink-0">
                         <input type="file" name="attachment" class="hidden" onchange="checkFile(this)">
-                        <i data-feather="paperclip" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                        <i data-feather="paperclip" class="w-5 h-5"></i>
                     </label>
 
-                    {{-- Text Area Wrapper --}}
+                    {{-- Textarea --}}
                     <div
-                        class="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-black/5 focus-within:border-black focus-within:bg-white transition-all shadow-sm">
-
-                        {{-- File Preview Indicator --}}
-                        <div id="file-preview"
-                            class="hidden mb-2 pb-2 border-b border-gray-100 text-xs font-bold text-blue-600 flex items-center gap-2">
-                            <div class="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
-                                <i data-feather="file" class="w-3 h-3"></i>
-                            </div>
-                            <span id="file-name" class="truncate max-w-[200px]">filename.jpg</span>
-                            <button type="button" onclick="clearFile()"
-                                class="ml-auto text-gray-400 hover:text-red-500">
-                                <i data-feather="x" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-
-                        <textarea name="message" rows="1" placeholder="Ketik pesan Anda..."
-                            class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm text-gray-900 placeholder-gray-400 resize-none max-h-32 leading-relaxed"
+                        class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus-within:border-black focus-within:bg-white transition-all">
+                        <textarea name="message" rows="1" placeholder="Type a message..."
+                            class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm resize-none max-h-32"
                             oninput="autoResize(this)"></textarea>
+
+                        <div id="file-preview"
+                            class="hidden mt-2 text-xs font-bold text-purple-600 flex items-center gap-1">
+                            <i data-feather="file" class="w-3 h-3"></i>
+                            <span id="file-name">filename.jpg</span>
+                        </div>
                     </div>
 
-                    {{-- Send Button --}}
+                    {{-- Send --}}
                     <button type="submit"
-                        class="p-3 rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg shadow-black/20 flex-shrink-0 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                        class="p-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 shadow-lg shadow-purple-200 flex-shrink-0 transition-all">
                         <i data-feather="send" class="w-5 h-5"></i>
                     </button>
                 </form>
@@ -263,17 +274,12 @@
         </div>
     </div>
 
-    {{-- Script --}}
     <script>
-        // Auto Scroll ke bawah
+        // Auto scroll to bottom
         window.onload = function() {
-            scrollToBottom();
-        };
-
-        function scrollToBottom() {
             const container = document.getElementById('chat-container');
             if (container) container.scrollTop = container.scrollHeight;
-        }
+        };
 
         // Auto resize textarea
         function autoResize(textarea) {
@@ -281,23 +287,16 @@
             textarea.style.height = textarea.scrollHeight + 'px';
         }
 
-        // File check logic
+        // File preview
         function checkFile(input) {
             const preview = document.getElementById('file-preview');
             const nameSpan = document.getElementById('file-name');
-
             if (input.files && input.files[0]) {
                 preview.classList.remove('hidden');
                 nameSpan.innerText = input.files[0].name;
             } else {
                 preview.classList.add('hidden');
             }
-        }
-
-        function clearFile() {
-            const input = document.querySelector('input[name="attachment"]');
-            input.value = '';
-            checkFile(input);
         }
     </script>
 @endsection

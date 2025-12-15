@@ -26,6 +26,7 @@ CREATE TABLE public.deliverables (
   file_type text,
   message text,
   created_at timestamp without time zone,
+  updated_at timestamp without time zone,
   CONSTRAINT deliverables_pkey PRIMARY KEY (id),
   CONSTRAINT deliverables_task_id_fkey FOREIGN KEY (task_id) REFERENCES public.tasks(id),
   CONSTRAINT deliverables_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES public.users(id)
@@ -143,6 +144,8 @@ CREATE TABLE public.tasks (
   updated_at timestamp without time zone,
   workspace_id uuid,
   assignee_id uuid,
+  active_at timestamp without time zone,
+  review_at timestamp without time zone,
   CONSTRAINT tasks_pkey PRIMARY KEY (id),
   CONSTRAINT tasks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT tasks_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),

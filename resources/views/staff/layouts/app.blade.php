@@ -2,8 +2,8 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Staff Portal - Vektora</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -11,20 +11,7 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    },
-                    colors: {
-                        bento: {
-                            dark: '#050505',
-                            /* Lebih gelap dari login */
-                            card: '#111111',
-                            border: '#222222',
-                            accent: '#ffffff',
-                            muted: '#737373',
-                        }
-                    },
-                    borderRadius: {
-                        'bento': '1rem'
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui']
                     }
                 }
             }
@@ -32,53 +19,60 @@
     </script>
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-
-        .glass-effect {
-            background: rgba(17, 17, 17, 0.8);
-            backdrop-filter: blur(12px);
-        }
-
-        /* Scrollbar Dark Mode */
-        ::-webkit-scrollbar {
+        .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
+            height: 6px;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #050505;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 3px;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #374151;
+            border-radius: 20px;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 
-<body class="bg-bento-dark text-gray-300 antialiased overflow-hidden">
+<body class="bg-gray-100 font-sans antialiased text-gray-900">
+    <div class="flex min-h-screen">
 
-    <div class="flex h-screen">
+        {{-- SIDEBAR --}}
         @include('staff.partials.sidebar')
 
-        <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+        {{-- MAIN CONTENT --}}
+        <main class="flex-1 flex flex-col h-screen overflow-hidden">
 
+            {{-- HEADER --}}
             @include('staff.partials.header')
 
-            <main class="flex-1 overflow-y-auto p-6 md:p-8">
+            {{-- CONTENT --}}
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-8">
                 @yield('content')
-            </main>
 
-        </div>
+                <footer class="mt-10 text-center text-xs text-gray-400 pb-4">
+                    &copy; {{ date('Y') }} Vektora Creative Agency.
+                </footer>
+            </div>
+        </main>
     </div>
-
     <script>
         feather.replace();
     </script>

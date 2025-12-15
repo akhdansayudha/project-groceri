@@ -26,7 +26,11 @@ use App\Http\Controllers\Admin\StaffPerformanceController;
 // Staff Controllers
 use App\Http\Controllers\Staff\DashboardController as StaffDashboard;
 use App\Http\Controllers\Staff\AuthController as StaffAuthController;
-
+use App\Http\Controllers\Staff\NotificationController as StaffNotificationController;
+use App\Http\Controllers\Staff\ProjectController as StaffProjectController;
+use App\Http\Controllers\Staff\PerformanceController;
+use App\Http\Controllers\Staff\WalletController as StaffWalletController;
+use App\Http\Controllers\Staff\SettingController as StaffSettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -67,6 +71,9 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('requests', RequestController::class);
         Route::get('requests/{request}/chat', [RequestController::class, 'chat'])->name('requests.chat');
         Route::post('requests/{request}/chat', [RequestController::class, 'chatStore'])->name('requests.chat.store');
+        // Di dalam group prefix 'client' -> 'requests'
+        Route::post('requests/{request}/complete', [RequestController::class, 'markCompleted'])->name('requests.complete');
+        Route::post('requests/{request}/revision', [RequestController::class, 'requestRevision'])->name('requests.revision');
 
         // Workspaces
         Route::prefix('workspaces')->as('workspaces.')->group(function () {
@@ -198,5 +205,31 @@ Route::group(['prefix' => 'staff', 'as' => 'staff.'], function () {
     Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [StaffDashboard::class, 'index'])->name('dashboard');
         // Rute Task, Payout, dll. akan ditambahkan di sini.
+
+        // NOTIFICATIONS AJAX ROUTES (STAFF)
+        Route::post('/notifications/{id}/read', [StaffNotificationController::class, 'markAsRead'])->name('notifications.read');
+        Route::post('/notifications/read-all', [StaffNotificationController::class, 'markAllRead'])->name('notifications.readAll');
+
+        // TASKS ROUTES
+        Route::get('/projects', [StaffProjectController::class, 'index'])->name('projects.index');
+        Route::get('/projects/{id}', [StaffProjectController::class, 'show'])->name('projects.show');
+        Route::post('/projects/{id}/start', [StaffProjectController::class, 'startWork'])->name('projects.start');
+        Route::post('/projects/{id}/submit', [StaffProjectController::class, 'submit'])->name('projects.submit');
+
+        Route::get('/projects/{id}/chat', [StaffProjectController::class, 'chat'])->name('projects.chat');
+        Route::post('/projects/{id}/chat', [StaffProjectController::class, 'chatStore'])->name('projects.chat.store');
+
+        Route::get('/project-history', [StaffProjectController::class, 'history'])->name('projects.history');
+        Route::get('/my-performance', [PerformanceController::class, 'index'])->name('performance.index');
+
+        // Earnings & Payouts
+        Route::get('/earnings', [StaffWalletController::class, 'index'])->name('finance.earnings');
+        Route::post('/earnings/payout', [StaffWalletController::class, 'requestPayout'])->name('finance.payout');
+
+        // SETTINGS
+        Route::get('/settings', [StaffSettingController::class, 'index'])->name('settings');
+        Route::put('/settings/profile', [StaffSettingController::class, 'updateProfile'])->name('settings.profile');
+        Route::put('/settings/bank', [StaffSettingController::class, 'updateBank'])->name('settings.bank');
+        Route::put('/settings/password', [StaffSettingController::class, 'updatePassword'])->name('settings.password');
     });
 });

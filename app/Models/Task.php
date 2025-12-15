@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Deliverable;
 
 class Task extends Model
 {
@@ -23,7 +24,9 @@ class Task extends Model
         'toratix_locked',
         'started_at',
         'completed_at',
-        'assignee_id'
+        'assignee_id',
+        'active_at',
+        'review_at'
     ];
 
     protected $casts = [
@@ -32,6 +35,8 @@ class Task extends Model
         'deadline' => 'date',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'active_at' => 'datetime',
+        'review_at' => 'datetime',
     ];
 
     public function user()
@@ -49,7 +54,6 @@ class Task extends Model
         return $this->belongsTo(Workspace::class);
     }
 
-    // --- TAMBAHKAN INI ---
     public function messages()
     {
         // Relasi ke tabel task_messages, diurutkan dari chat terlama ke terbaru
@@ -60,5 +64,10 @@ class Task extends Model
     public function assignee()
     {
         return $this->belongsTo(User::class, 'assignee_id');
+    }
+
+    public function deliverables()
+    {
+        return $this->hasMany(Deliverable::class, 'task_id')->orderBy('created_at', 'desc');
     }
 }

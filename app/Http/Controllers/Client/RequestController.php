@@ -172,10 +172,104 @@ class RequestController extends Controller
     public function show($id)
     {
         $task = Task::where('user_id', Auth::id())
-            ->with(['service', 'workspace', 'messages']) // Eager load messages jika ada chat
+            ->with(['service', 'workspace', 'assignee', 'deliverables']) // Load Assignee & Deliverables
             ->findOrFail($id);
 
-        return view('client.requests.show', compact('task'));
+        // LOGIC STAFF ONLINE STATUS (5 Menit Terakhir)
+        $isStaffOnline = false;
+        if ($task->assignee_id) {
+            $onlineThreshold = now()->subMinutes(5)->timestamp;
+            $isStaffOnline = DB::table('sessions')
+                ->where('user_id', $task->assignee_id)
+                ->where('last_activity', '>=', $onlineThreshold)
+                ->exists();
+        }
+
+        return view('client.requests.show', compact('task', 'isStaffOnline'));
+    }
+
+    // CLIENT MENERIMA HASIL KERJA (Acc)
+    public function markCompleted($id)
+    {
+        $task = Task::where('user_id', Auth::id())->findOrFail($id);
+
+        // Validasi Status
+        if ($task->status !== 'review') {
+            return back()->with('error', 'Action not allowed. Project must be under review.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // 1. Update Status Project
+            $task->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+
+            // 2. Transfer Token ke Staff
+            $staff = $task->assignee; // Pastikan relasi 'assignee' ada di model Task
+            $amount = $task->toratix_locked;
+
+            if ($staff && $amount > 0) {
+                // A. Tambah Saldo Wallet Staff
+                $staff->wallet->increment('balance', $amount);
+
+                // B. Catat Transaksi Masuk (Earning)
+                Transaction::create([
+                    'wallet_id' => $staff->wallet->id,
+                    'type' => 'earning', // Pastikan enum 'earning' sudah ada di database
+                    'amount' => $amount,
+                    'description' => "Payment from Client for Project #{$task->id}",
+                    'reference_id' => $task->id
+                ]);
+            }
+
+            DB::commit();
+            return back()->with('success', 'Project accepted and completed! Payment has been released to the staff.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to complete project: ' . $e->getMessage());
+        }
+    }
+
+    // CLIENT MENGAJUKAN REVISI
+    public function requestRevision(Request $request, $id)
+    {
+        $task = Task::where('user_id', Auth::id())->findOrFail($id);
+
+        if ($task->status !== 'review') {
+            return back()->with('error', 'Action not allowed.');
+        }
+
+        $request->validate([
+            'revision_notes' => 'required|string|max:1000',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // 1. Update Status
+            $task->update([
+                'status' => 'revision',
+            ]);
+
+            // 2. KIRIM PESAN OTOMATIS KE CHAT (AUTO-MESSAGE)
+            // Kita pakai prefix khusus "REVISION REQUESTED:" untuk deteksi di View nanti
+            TaskMessage::create([
+                'task_id' => $task->id,
+                'sender_id' => Auth::id(), // Pengirimnya Client sendiri
+                'content' => "REVISION REQUESTED:\n" . $request->revision_notes,
+                'is_read' => false,
+                'created_at' => now(),
+            ]);
+
+            DB::commit();
+            return back()->with('success', 'Revision request sent to staff via chat.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to send revision: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -278,7 +372,7 @@ class RequestController extends Controller
     public function chat($id)
     {
         $task = Task::where('user_id', Auth::id())
-            ->with(['service', 'messages.user']) // Load pesan beserta pengirimnya
+            ->with(['service', 'messages.user', 'assignee']) // Load Assignee juga
             ->findOrFail($id);
 
         // Validasi: Chat hanya boleh jika status BUKAN queue
@@ -287,7 +381,26 @@ class RequestController extends Controller
                 ->with('error', 'Fitur chat belum tersedia saat status masih Queue.');
         }
 
-        return view('client.requests.chat', compact('task'));
+        // --- LOGIC ONLINE STATUS (5 Menit Terakhir) ---
+        $onlineThreshold = now()->subMinutes(5)->timestamp;
+
+        // 1. Cek Staff (Assignee) Online
+        $isStaffOnline = false;
+        if ($task->assignee_id) {
+            $isStaffOnline = DB::table('sessions')
+                ->where('user_id', $task->assignee_id)
+                ->where('last_activity', '>=', $onlineThreshold)
+                ->exists();
+        }
+
+        // 2. Cek Admin Online (User role 'admin')
+        $isAdminOnline = DB::table('sessions')
+            ->join('users', 'sessions.user_id', '=', 'users.id')
+            ->where('users.role', 'admin')
+            ->where('sessions.last_activity', '>=', $onlineThreshold)
+            ->exists();
+
+        return view('client.requests.chat', compact('task', 'isStaffOnline', 'isAdminOnline'));
     }
 
     /**
@@ -296,6 +409,10 @@ class RequestController extends Controller
     public function chatStore(Request $request, $id)
     {
         $task = Task::where('user_id', Auth::id())->findOrFail($id);
+
+        if ($task->status === 'completed') {
+            return back()->with('error', 'Project sudah selesai. Obrolan ditutup.');
+        }
 
         $request->validate([
             'message' => 'nullable|string',

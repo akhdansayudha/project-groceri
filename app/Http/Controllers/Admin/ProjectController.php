@@ -92,6 +92,10 @@ class ProjectController extends Controller
             'assignee_id' => 'nullable|exists:users,id',
         ]);
 
+        if ($task->status !== 'active' && $request->status == 'active') {
+            $task->active_at = now();
+        }
+
         $task->status = $request->status;
 
         if ($request->has('assignee_id') && $request->assignee_id != null) {

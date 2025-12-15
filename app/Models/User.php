@@ -22,6 +22,10 @@ class User extends Authenticatable
         'password',
         'avatar_url',
         'role',
+        'avatar_url',
+        'bank_name',
+        'bank_account',
+        'bank_holder',
     ];
 
     protected $hidden = [
@@ -53,7 +57,7 @@ class User extends Authenticatable
 
         // 3. (REVISI) Generate URL manual dari config untuk menghindari error editor
         $baseUrl = config('filesystems.disks.supabase.url');
-        
+
         // Gabungkan Base URL + Path File (misal: https://.../profiles/foto.jpg)
         return rtrim($baseUrl, '/') . '/' . ltrim($value, '/');
     }
