@@ -1,6 +1,12 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.agency_settings (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  payout_rate_per_token integer DEFAULT 8000,
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT agency_settings_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.audit_logs (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   user_id uuid,
@@ -40,6 +46,17 @@ CREATE TABLE public.invoices (
   CONSTRAINT invoices_pkey PRIMARY KEY (id),
   CONSTRAINT invoices_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+CREATE TABLE public.notification_batches (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  title character varying NOT NULL,
+  message text NOT NULL,
+  type character varying NOT NULL,
+  target_audience character varying NOT NULL,
+  sender_id uuid,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT notification_batches_pkey PRIMARY KEY (id),
+  CONSTRAINT notification_batches_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id)
+);
 CREATE TABLE public.notifications (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   user_id uuid,
@@ -49,8 +66,10 @@ CREATE TABLE public.notifications (
   reference_id uuid,
   is_read boolean DEFAULT false,
   created_at timestamp without time zone,
+  batch_id bigint,
   CONSTRAINT notifications_pkey PRIMARY KEY (id),
-  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT notifications_batch_id_fkey FOREIGN KEY (batch_id) REFERENCES public.notification_batches(id)
 );
 CREATE TABLE public.services (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
@@ -62,6 +81,7 @@ CREATE TABLE public.services (
   is_active boolean DEFAULT true,
   created_at timestamp without time zone,
   updated_at timestamp without time zone DEFAULT now(),
+  staff_commission integer DEFAULT 0,
   CONSTRAINT services_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.sessions (
@@ -73,6 +93,18 @@ CREATE TABLE public.sessions (
   last_activity integer NOT NULL,
   CONSTRAINT sessions_pkey PRIMARY KEY (id),
   CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.staff_payouts (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  user_id uuid NOT NULL,
+  amount_token integer NOT NULL,
+  amount_currency numeric NOT NULL,
+  status character varying DEFAULT 'pending'::character varying,
+  proof_url text,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT staff_payouts_pkey PRIMARY KEY (id),
+  CONSTRAINT staff_payouts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.task_assignees (
   task_id uuid NOT NULL,
@@ -163,6 +195,9 @@ CREATE TABLE public.users (
   updated_at timestamp without time zone DEFAULT now(),
   last_login_at timestamp without time zone,
   last_login_ip character varying,
+  bank_name character varying,
+  bank_account character varying,
+  bank_holder character varying,
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.wallets (

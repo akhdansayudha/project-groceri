@@ -23,8 +23,8 @@
         class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in">
         @csrf
 
+        {{-- KOLOM KIRI: FORM DETAIL --}}
         <div class="lg:col-span-2 space-y-6">
-
             <div class="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm">
                 <h3 class="font-bold text-lg mb-6 flex items-center gap-2">
                     <span class="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs">1</span>
@@ -32,19 +32,15 @@
                 </h3>
 
                 <div class="space-y-6">
-
+                    {{-- Select Workspace --}}
                     <div class="group">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Select
                             Workspace</label>
                         <select name="workspace_id" required
                             class="w-full border-b border-gray-200 py-3 bg-transparent font-medium focus:border-black outline-none cursor-pointer">
-
-                            {{-- Option Default --}}
                             <option value="" disabled {{ !isset($preselectedWorkspaceId) ? 'selected' : '' }}>
                                 Choose a workspace folder...
                             </option>
-
-                            {{-- Loop Workspaces --}}
                             @foreach ($workspaces as $ws)
                                 <option value="{{ $ws->id }}"
                                     {{ isset($preselectedWorkspaceId) && $preselectedWorkspaceId == $ws->id ? 'selected' : '' }}>
@@ -52,11 +48,8 @@
                                 </option>
                             @endforeach
                         </select>
-
                         <p class="text-[10px] text-gray-400 mt-1">Project ini akan dikelompokkan ke folder workspace
                             tersebut.</p>
-
-                        {{-- Helper jika user belum punya workspace sama sekali --}}
                         @if ($workspaces->count() == 0)
                             <p class="text-xs text-red-500 mt-2 font-medium">
                                 Anda belum memiliki workspace.
@@ -66,6 +59,7 @@
                         @endif
                     </div>
 
+                    {{-- Title --}}
                     <div class="group">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Project
                             Title</label>
@@ -73,6 +67,7 @@
                             class="w-full border-b border-gray-200 py-3 text-lg font-medium focus:outline-none focus:border-black transition-colors bg-transparent placeholder-gray-300">
                     </div>
 
+                    {{-- Deadline --}}
                     <div class="group">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Target
                             Deadline</label>
@@ -80,6 +75,7 @@
                             class="w-full border-b border-gray-200 py-3 bg-transparent font-medium focus:border-black outline-none text-gray-700">
                     </div>
 
+                    {{-- Description --}}
                     <div class="group">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Description /
                             Brief</label>
@@ -88,11 +84,11 @@
                         <p class="text-xs text-gray-400 mt-2 text-right">Markdown supported</p>
                     </div>
 
+                    {{-- Additional Details --}}
                     <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100">
                         <p class="text-sm font-bold mb-4 flex items-center gap-2">
                             <i data-feather="sliders" class="w-4 h-4"></i> Additional Details
                         </p>
-
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label class="text-xs text-gray-500 font-semibold">Brand Color (Hex)</label>
@@ -113,19 +109,14 @@
                         </div>
                     </div>
 
+                    {{-- Attachments --}}
                     <div class="group">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Attachments
                             (Optional)</label>
-
-                        {{-- Area Upload --}}
                         <div id="upload-area"
                             class="border-2 border-dashed border-gray-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all relative">
-
-                            {{-- Input File Asli (Hidden tapi aktif) --}}
                             <input type="file" name="attachments" id="file-input"
                                 class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="handleFileSelect(this)">
-
-                            {{-- Tampilan Default (Sebelum Upload) --}}
                             <div id="default-view" class="flex flex-col items-center pointer-events-none">
                                 <div
                                     class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-3 text-gray-400">
@@ -134,12 +125,9 @@
                                 <p class="text-sm font-bold">Click to upload or drag files here</p>
                                 <p class="text-xs text-gray-400 mt-1">JPG, PNG, PDF up to 10MB</p>
                             </div>
-
-                            {{-- Tampilan Preview (Setelah File Dipilih) --}}
                             <div id="preview-view" class="hidden flex-col items-center pointer-events-none fade-in">
                                 <div
                                     class="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center mb-3 shadow-lg">
-                                    {{-- Ikon File akan berubah via JS --}}
                                     <i id="file-icon" data-feather="file" class="w-6 h-6"></i>
                                 </div>
                                 <p id="file-name" class="text-sm font-bold text-gray-900 break-all max-w-[200px]">
@@ -150,59 +138,14 @@
                             </div>
                         </div>
                     </div>
-
-                    {{-- Script Khusus untuk Preview File --}}
-                    <script>
-                        function handleFileSelect(input) {
-                            const defaultView = document.getElementById('default-view');
-                            const previewView = document.getElementById('preview-view');
-                            const fileNameEl = document.getElementById('file-name');
-                            const fileSizeEl = document.getElementById('file-size');
-                            const uploadArea = document.getElementById('upload-area');
-
-                            if (input.files && input.files[0]) {
-                                const file = input.files[0];
-
-                                // 1. Update Teks Nama & Ukuran
-                                fileNameEl.textContent = file.name;
-
-                                // Format ukuran file (Bytes -> KB/MB)
-                                let size = file.size;
-                                let unit = 'Bytes';
-                                if (size > 1024 * 1024) {
-                                    size = (size / (1024 * 1024)).toFixed(2);
-                                    unit = 'MB';
-                                } else if (size > 1024) {
-                                    size = (size / 1024).toFixed(1);
-                                    unit = 'KB';
-                                }
-                                fileSizeEl.textContent = `${size} ${unit}`;
-
-                                // 2. Ganti Tampilan
-                                defaultView.classList.add('hidden');
-                                previewView.classList.remove('hidden');
-                                previewView.classList.add('flex');
-
-                                // Ubah border jadi hijau agar user tahu berhasil dipilih
-                                uploadArea.classList.add('border-green-400', 'bg-green-50/20');
-                                uploadArea.classList.remove('border-gray-200');
-
-                            } else {
-                                // Reset jika batal pilih
-                                defaultView.classList.remove('hidden');
-                                previewView.classList.add('hidden');
-                                previewView.classList.remove('flex');
-                                uploadArea.classList.remove('border-green-400', 'bg-green-50/20');
-                                uploadArea.classList.add('border-gray-200');
-                            }
-                        }
-                    </script>
                 </div>
             </div>
         </div>
 
+        {{-- KOLOM KANAN: PILIH LAYANAN & SUMMARY --}}
         <div class="space-y-6">
 
+            {{-- 2. Select Service --}}
             <div class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
                 <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
                     <span class="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs">2</span>
@@ -211,28 +154,35 @@
 
                 <input type="hidden" name="service_id" id="selected_service_id" required>
 
+                {{-- Scrollable List --}}
                 <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                     @foreach ($services as $service)
+                        {{-- PERBAIKAN: Gunakan data-description agar karakter & tampil benar --}}
                         <div onclick="selectService(this, '{{ $service->id }}', '{{ $service->name }}', {{ $service->toratix_cost }})"
+                            data-description="{{ $service->description }}"
                             class="service-card border border-gray-200 rounded-2xl p-4 cursor-pointer hover:border-black transition-all group relative">
 
                             <div class="flex justify-between items-start">
                                 <div class="flex items-center gap-3">
+                                    {{-- Ikon Layanan --}}
                                     <div
-                                        class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-black group-hover:text-white transition-colors icon-container">
+                                        class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 group-hover:bg-black group-hover:text-white transition-colors icon-container border border-gray-100 shrink-0">
                                         @if ($service->icon_url)
-                                            <img src="{{ $service->icon_url }}" class="w-4 h-4">
+                                            <img src="{{ \Illuminate\Support\Facades\Storage::disk('supabase')->url($service->icon_url) }}"
+                                                class="w-5 h-5 object-contain">
                                         @else
-                                            <i data-feather="zap" class="w-4 h-4"></i>
+                                            <i data-feather="zap" class="w-5 h-5"></i>
                                         @endif
                                     </div>
                                     <div>
                                         <h5 class="font-bold text-sm service-name">{{ $service->name }}</h5>
-                                        <p class="text-[10px] text-gray-400">{{ Str::limit($service->description, 40) }}
+                                        <p class="text-[10px] text-gray-400 leading-tight mt-0.5">
+                                            {{ Str::limit($service->description, 50) }}
                                         </p>
                                     </div>
                                 </div>
-                                <span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded text-gray-600 cost-badge">
+                                <span
+                                    class="text-xs font-bold bg-gray-100 px-2.5 py-1 rounded-lg text-gray-600 cost-badge border border-gray-200">
                                     {{ $service->toratix_cost }} TX
                                 </span>
                             </div>
@@ -245,6 +195,7 @@
                 </div>
             </div>
 
+            {{-- 3. Payment Summary --}}
             <div class="bg-[#111] text-white p-8 rounded-3xl shadow-xl sticky top-24">
                 <p class="text-xs text-gray-400 uppercase tracking-widest font-bold mb-6">Payment Summary</p>
 
@@ -253,65 +204,85 @@
                     <span class="font-bold">{{ $balance }} TX</span>
                 </div>
 
-                <div class="flex justify-between items-center mb-2">
+                <div class="flex justify-between items-center mb-6">
                     <span class="text-sm text-gray-300" id="summary_service_name">Select a service...</span>
                     <span class="font-bold text-xl" id="summary_cost">0 TX</span>
                 </div>
 
                 <div id="insufficient_funds"
-                    class="hidden mt-4 bg-red-900/50 border border-red-800 p-3 rounded-xl text-xs text-red-200 flex items-center gap-2">
+                    class="hidden mb-6 bg-red-900/50 border border-red-800 p-3 rounded-xl text-xs text-red-200 flex items-center gap-2">
                     <i data-feather="alert-triangle" class="w-4 h-4"></i>
                     <span>Insufficient balance.</span>
                     <a href="{{ route('client.wallet.topup') }}" class="underline font-bold hover:text-white">Top Up</a>
                 </div>
 
                 <button type="submit" id="btn_submit" disabled
-                    class="w-full mt-8 py-4 bg-white text-black rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                    class="w-full py-4 bg-white text-black rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
                     <span>Create Request</span>
                     <i data-feather="arrow-right" class="w-4 h-4"></i>
                 </button>
+
+                {{-- Deskripsi Layanan Detail (Akan muncul saat dipilih) --}}
+                <div id="service_description_box" class="hidden mt-6 pt-6 border-t border-gray-800 fade-in">
+                    <p class="text-[10px] text-gray-500 uppercase font-bold mb-2">About this service</p>
+                    <p id="service_desc_text" class="text-xs text-gray-300 leading-relaxed whitespace-pre-line"></p>
+                </div>
             </div>
 
         </div>
     </form>
 
+    {{-- SCRIPTS --}}
     <script>
         const userBalance = {{ $balance }};
         let selectedCost = 0;
 
+        // Parameter 'description' dihapus dari fungsi, kita ambil dari atribut elemen
         function selectService(el, id, name, cost) {
-            // Reset UI
+
+            // 1. Ambil deskripsi dari atribut data-description
+            // Browser otomatis men-decode &amp; menjadi & di sini
+            const description = el.getAttribute('data-description');
+
+            // Reset UI semua kartu
             document.querySelectorAll('.service-card').forEach(card => {
                 card.classList.remove('border-black', 'bg-black', 'text-white');
                 card.classList.add('border-gray-200');
 
                 const iconBox = card.querySelector('.icon-container');
                 iconBox.classList.remove('bg-white', 'text-black');
-                iconBox.classList.add('bg-gray-100', 'text-gray-500');
+                iconBox.classList.add('bg-gray-50', 'text-gray-500');
 
                 card.querySelector('.service-name').classList.remove('text-white');
                 const badge = card.querySelector('.cost-badge');
-                badge.classList.remove('bg-gray-800', 'text-white');
-                badge.classList.add('bg-gray-100', 'text-gray-600');
+                badge.classList.remove('bg-gray-800', 'text-white', 'border-gray-700');
+                badge.classList.add('bg-gray-100', 'text-gray-600', 'border-gray-200');
             });
 
-            // Highlight Selected
+            // Highlight Kartu Terpilih
             el.classList.remove('border-gray-200');
             el.classList.add('bg-black', 'text-white', 'border-black');
 
             const activeIcon = el.querySelector('.icon-container');
-            activeIcon.classList.remove('bg-gray-100', 'text-gray-500');
+            activeIcon.classList.remove('bg-gray-50', 'text-gray-500');
             activeIcon.classList.add('bg-white', 'text-black');
 
             const activeBadge = el.querySelector('.cost-badge');
-            activeBadge.classList.remove('bg-gray-100', 'text-gray-600');
-            activeBadge.classList.add('bg-gray-800', 'text-white');
+            activeBadge.classList.remove('bg-gray-100', 'text-gray-600', 'border-gray-200');
+            activeBadge.classList.add('bg-gray-800', 'text-white', 'border-gray-700');
 
-            // Update Input
+            // Update Input Hidden & Summary
             document.getElementById('selected_service_id').value = id;
             document.getElementById('summary_service_name').innerText = name;
             document.getElementById('summary_cost').innerText = cost + " TX";
             selectedCost = cost;
+
+            // Tampilkan Deskripsi Detail
+            const descBox = document.getElementById('service_description_box');
+            const descText = document.getElementById('service_desc_text');
+
+            descBox.classList.remove('hidden');
+            descText.innerText = description; // Sekarang teks akan tampil bersih (Logo & Branding)
 
             validateBalance();
         }
@@ -330,6 +301,43 @@
                 }
             } else {
                 btn.disabled = true;
+            }
+        }
+
+        // Script File Upload Preview (TETAP SAMA)
+        function handleFileSelect(input) {
+            const defaultView = document.getElementById('default-view');
+            const previewView = document.getElementById('preview-view');
+            const fileNameEl = document.getElementById('file-name');
+            const fileSizeEl = document.getElementById('file-size');
+            const uploadArea = document.getElementById('upload-area');
+
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                fileNameEl.textContent = file.name;
+
+                let size = file.size;
+                let unit = 'Bytes';
+                if (size > 1024 * 1024) {
+                    size = (size / (1024 * 1024)).toFixed(2);
+                    unit = 'MB';
+                } else if (size > 1024) {
+                    size = (size / 1024).toFixed(1);
+                    unit = 'KB';
+                }
+                fileSizeEl.textContent = `${size} ${unit}`;
+
+                defaultView.classList.add('hidden');
+                previewView.classList.remove('hidden');
+                previewView.classList.add('flex');
+                uploadArea.classList.add('border-green-400', 'bg-green-50/20');
+                uploadArea.classList.remove('border-gray-200');
+            } else {
+                defaultView.classList.remove('hidden');
+                previewView.classList.add('hidden');
+                previewView.classList.remove('flex');
+                uploadArea.classList.remove('border-green-400', 'bg-green-50/20');
+                uploadArea.classList.add('border-gray-200');
             }
         }
     </script>

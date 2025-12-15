@@ -21,9 +21,11 @@ use App\Http\Controllers\Admin\ProjectController as AdminProjectController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\AnalyticsController as AdminAnalyticsController;
 use App\Http\Controllers\Admin\WorkspaceController as AdminWorkspaceController;
+use App\Http\Controllers\Admin\StaffPerformanceController;
 
 // Staff Controllers
 use App\Http\Controllers\Staff\DashboardController as StaffDashboard;
+use App\Http\Controllers\Staff\AuthController as StaffAuthController;
 
 
 /*
@@ -159,6 +161,13 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
 
         Route::resource('notifications', App\Http\Controllers\Admin\NotificationController::class);
         Route::get('/audit-logs', [App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit.index');
+
+        // STAFF PERFORMANCE & PAYROLL
+        Route::get('/performance', [StaffPerformanceController::class, 'index'])->name('performance.index');
+        Route::get('/performance/{id}', [StaffPerformanceController::class, 'show'])->name('performance.show');
+        Route::post('/performance/{id}/approve', [StaffPerformanceController::class, 'approvePayout'])->name('performance.approve');
+
+        Route::post('/performance/rate/update', [StaffPerformanceController::class, 'updateRate'])->name('performance.update_rate');
     });
 });
 
@@ -169,8 +178,25 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->group(function () {
-    Route::group(['prefix' => 'staff', 'as' => 'staff.'], function () {
+Route::group(['prefix' => 'staff', 'as' => 'staff.'], function () {
+
+    // 1. Redirect Root Staff
+    Route::get('/', function () {
+        return redirect()->route('staff.login');
+    });
+
+    // 2. Staff Authentication (Guest)
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', [StaffAuthController::class, 'index'])->name('login'); // <-- Rute Login
+        Route::post('/login', [StaffAuthController::class, 'login'])->name('login.post');
+    });
+
+    // 3. Staff Logout
+    Route::post('/logout', [StaffAuthController::class, 'logout'])->name('logout'); // <-- Rute Logout
+
+    // 4. Protected Routes (Staff Only)
+    Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [StaffDashboard::class, 'index'])->name('dashboard');
+        // Rute Task, Payout, dll. akan ditambahkan di sini.
     });
 });

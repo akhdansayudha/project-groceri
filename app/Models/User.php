@@ -79,4 +79,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(Task::class, 'assignee_id');
     }
+    public function payouts()
+    {
+        return $this->hasMany(StaffPayout::class, 'user_id');
+    }
 }

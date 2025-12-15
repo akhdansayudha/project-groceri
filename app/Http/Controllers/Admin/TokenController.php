@@ -61,6 +61,8 @@ class TokenController extends Controller
             // Ambil atau Buat Wallet
             $wallet = Wallet::firstOrCreate(['user_id' => $request->user_id]);
 
+            $dbType = ($request->type == 'credit') ? 'topup' : 'usage';
+
             // Logic Saldo
             if ($request->type == 'credit') {
                 $wallet->increment('balance', $request->amount);
@@ -77,7 +79,7 @@ class TokenController extends Controller
             Transaction::create([
                 'id' => \Illuminate\Support\Str::uuid(),
                 'wallet_id' => $wallet->id,
-                'type' => $request->type,
+                'type' => $dbType,
                 'amount' => $request->amount,
                 'description' => $request->description . ' (Admin Adjustment)',
                 'created_at' => now()

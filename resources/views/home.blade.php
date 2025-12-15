@@ -126,7 +126,7 @@
         
         <div class="bg-white rounded-[3rem] p-8 md:p-16 shadow-sm">
              <div class="space-y-4">
-                @php $services = ['Brand Design', 'UI/UX Design', 'Motion Design', 'Graphic Design', 'Illustration']; @endphp
+                @php $services = ['Brand Design', 'UI/UX Design', 'Motion Design', 'Graphic Design', 'Illustration', 'Graphic Design', 'Logo Design']; @endphp
                 @foreach($services as $index => $service)
                 <div class="group flex items-center justify-between py-8 border-b border-gray-100 hover:px-6 transition-all duration-300 cursor-pointer hover-target">
                     <div class="flex items-center gap-8">

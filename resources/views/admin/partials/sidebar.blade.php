@@ -130,6 +130,12 @@
                     <span>Staff & Roles</span>
                 </a>
 
+                <a href="{{ route('admin.performance.index') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group {{ request()->routeIs('admin.performance.*') ? 'bg-white text-black font-bold shadow-lg' : 'hover:bg-gray-900 hover:text-white' }}">
+                    <i data-feather="trending-up" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span>Performance & Payroll</span>
+                </a>
+
                 <a href="{{ route('admin.services.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group {{ request()->routeIs('admin.services.*') ? 'bg-white text-black font-bold shadow-lg' : 'hover:bg-gray-900 hover:text-white' }}">
                     <i data-feather="package" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
@@ -151,7 +157,7 @@
                 </a>
 
                 <a href="{{ route('admin.tokens.index') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group hover:bg-gray-900 hover:text-white">
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group {{ request()->routeIs('admin.tokens.*') ? 'bg-white text-black font-bold shadow-lg' : 'hover:bg-gray-900 hover:text-white' }}">
                     <i data-feather="database" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
                     <span>Token Manager</span>
                 </a>
@@ -174,12 +180,6 @@
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group {{ request()->routeIs('admin.audit.*') ? 'bg-white text-black font-bold shadow-lg' : 'hover:bg-gray-900 hover:text-white' }}">
                     <i data-feather="activity" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
                     <span>Audit Logs</span>
-                </a>
-
-                <a href="#"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group hover:bg-gray-900 hover:text-white">
-                    <i data-feather="settings" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                    <span>Agency Settings</span>
                 </a>
             </div>
         </div>

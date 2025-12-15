@@ -4,9 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - Vektora Agency</title>
+    <title>Staff Login | Vektora Creative Agency</title>
 
-    {{-- GANTI VITE DENGAN CDN AGAR TIDAK PERLU NPM RUN BUILD --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -16,11 +15,15 @@
                         sans: ['Inter', 'ui-sans-serif', 'system-ui'],
                     },
                     colors: {
+                        // Menggunakan Skema Warna Minimalis untuk Staff
                         bento: {
                             dark: '#0a0a0a',
                             card: '#111111',
-                            accent: '#8b5cf6',
-                            'accent-light': '#a78bfa',
+                            // Accent warna hitam atau abu-abu gelap
+                            accent: '#1f2937', // Dark Gray / Slate
+                            'accent-light': '#374151', // Lighter Slate
+                            'white-primary': '#ffffff',
+                            'white-secondary': '#e5e7eb',
                         }
                     },
                     borderRadius: {
@@ -37,6 +40,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+        /* Utility Styles dari Admin Login */
         * {
             box-sizing: border-box;
         }
@@ -57,17 +61,20 @@
             animation: slideInRight 0.7s ease-out 0.2s both;
         }
 
+        /* Custom Bento Grid Background (Grid berwarna putih tipis) */
         .bento-grid {
             background-image:
-                linear-gradient(to right, rgba(139, 92, 246, 0.05) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(139, 92, 246, 0.05) 1px, transparent 1px);
+                linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
             background-size: 40px 40px;
         }
 
+        /* Pulse menggunakan warna White-Primary */
         .pulse-accent {
             animation: pulse 2s infinite;
         }
 
+        /* Hover Lift menggunakan warna Black/Dark */
         .hover-lift {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
@@ -111,17 +118,18 @@
             }
         }
 
+        /* Mengubah Pulse ke tema gelap/putih */
         @keyframes pulse {
             0% {
-                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1);
             }
 
             70% {
-                box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+                box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
             }
 
             100% {
-                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
             }
         }
 
@@ -146,7 +154,7 @@
 
     <div class="w-full max-w-6xl bg-bento-card rounded-bento-lg overflow-hidden shadow-2xl flex split-layout fade-in">
 
-        {{-- Left Panel: Creative Showcase --}}
+        {{-- Left Panel: Staff Showcase & Mission --}}
         <div
             class="w-1/2 bg-gradient-to-br from-bento-dark to-gray-900 p-12 flex flex-col justify-between relative overflow-hidden left-panel slide-in-left">
             {{-- Bento Grid Background --}}
@@ -154,48 +162,48 @@
 
             {{-- Decorative Elements --}}
             <div
-                class="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-gradient-to-br from-bento-accent to-transparent opacity-10">
+                class="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-gradient-to-br from-bento-white-primary to-transparent opacity-10">
             </div>
             <div
-                class="absolute bottom-10 left-10 w-32 h-32 rounded-bento bg-gradient-to-tr from-bento-accent to-transparent opacity-5">
+                class="absolute bottom-10 left-10 w-32 h-32 rounded-bento bg-gradient-to-tr from-bento-white-primary to-transparent opacity-5">
             </div>
 
             {{-- Content --}}
             <div class="relative z-10">
                 <div class="flex items-center gap-3 mb-8">
                     <div
-                        class="w-12 h-12 bg-white text-black rounded-bento-sm flex items-center justify-center shadow-lg">
-                        <span class="text-2xl font-bold tracking-tighter">V.</span>
+                        class="w-12 h-12 bg-bento-white-primary text-black rounded-bento-sm flex items-center justify-center shadow-lg">
+                        <i data-feather="users" class="w-6 h-6"></i>
                     </div>
                     <div>
                         <h1 class="text-xl font-bold text-white">Vektora</h1>
-                        <p class="text-xs text-gray-500">Creative Agency</p>
+                        <p class="text-xs text-gray-500">Staff Portal</p>
                     </div>
                 </div>
 
                 <h2 class="text-3xl font-bold text-white mb-6 leading-tight">
-                    Where <span class="text-bento-accent">Creativity</span><br>
-                    Meets <span class="text-bento-accent">Strategy</span>
+                    Your hub for <span class="text-bento-white-secondary">Production</span><br>
+                    and <span class="text-bento-white-secondary">Innovation</span>
                 </h2>
 
                 <p class="text-gray-400 mb-8 max-w-md">
-                    Welcome back to the creative command center. Access tools to manage projects, collaborate with
-                    teams, and bring visionary ideas to life.
+                    Access your assigned tasks, monitor client chats, track your performance, and deliver excellence.
+                    Your work defines Vektora.
                 </p>
 
-                {{-- Bento Stats --}}
+                {{-- Bento Stats (Akan diisi dengan Live Data Staff Nanti) --}}
                 <div class="grid grid-cols-3 gap-4 mb-10">
                     <div class="bg-black/40 backdrop-blur-sm rounded-bento-sm p-4 text-center border border-gray-800">
-                        <div class="text-2xl font-bold text-white">42+</div>
-                        <div class="text-xs text-gray-500">Projects</div>
+                        <div class="text-2xl font-bold text-white">4</div>
+                        <div class="text-xs text-gray-500">Active Tasks</div>
                     </div>
                     <div class="bg-black/40 backdrop-blur-sm rounded-bento-sm p-4 text-center border border-gray-800">
-                        <div class="text-2xl font-bold text-white">18</div>
-                        <div class="text-xs text-gray-500">Team Members</div>
+                        <div class="text-2xl font-bold text-white">85</div>
+                        <div class="text-xs text-gray-500">Toratix Earned</div>
                     </div>
                     <div class="bg-black/40 backdrop-blur-sm rounded-bento-sm p-4 text-center border border-gray-800">
-                        <div class="text-2xl font-bold text-white">96%</div>
-                        <div class="text-xs text-gray-500">Satisfaction</div>
+                        <div class="text-2xl font-bold text-white">4.8</div>
+                        <div class="text-xs text-gray-500">Rating</div>
                     </div>
                 </div>
             </div>
@@ -203,8 +211,8 @@
             {{-- Footer Note --}}
             <div class="relative z-10">
                 <div class="flex items-center gap-3 text-gray-500 text-sm">
-                    <i data-feather="shield" class="w-4 h-4"></i>
-                    <span>Secure admin portal with end-to-end encryption</span>
+                    <i data-feather="target" class="w-4 h-4"></i>
+                    <span>Focus on completion, we handle the administration.</span>
                 </div>
             </div>
         </div>
@@ -213,8 +221,8 @@
         <div class="w-1/2 p-12 flex flex-col justify-center right-panel slide-in-right">
             {{-- Login Header --}}
             <div class="text-center mb-10">
-                <h1 class="text-2xl font-bold text-white mb-2">Admin Access</h1>
-                <p class="text-gray-500">Sign in to manage your creative workspace</p>
+                <h1 class="text-2xl font-bold text-white mb-2">Staff Access</h1>
+                <p class="text-gray-500">Sign in with your team credentials</p>
             </div>
 
             {{-- Error Message --}}
@@ -228,7 +236,7 @@
 
             {{-- Login Card --}}
             <div class="bg-bento-dark border border-gray-800 rounded-bento p-8 hover-lift">
-                <form action="{{ route('admin.login.post') }}" method="POST" class="space-y-6">
+                <form action="{{ route('staff.login.post') }}" method="POST" class="space-y-6">
                     @csrf
 
                     {{-- Email Field --}}
@@ -240,8 +248,8 @@
                         </label>
                         <div class="relative">
                             <input type="email" name="email" id="email" required autofocus
-                                class="w-full bg-black/50 border border-gray-800 text-white rounded-bento-sm px-5 py-4 pl-12 focus:outline-none focus:border-bento-accent focus:ring-2 focus:ring-bento-accent/30 transition-all placeholder-gray-600"
-                                placeholder="admin@vektora.id">
+                                class="w-full bg-black/50 border border-gray-800 text-white rounded-bento-sm px-5 py-4 pl-12 focus:outline-none focus:border-bento-white-primary focus:ring-2 focus:ring-bento-white-primary/30 transition-all placeholder-gray-600"
+                                placeholder="staff@vektora.id">
                             <i data-feather="mail"
                                 class="w-5 h-5 text-gray-600 absolute left-5 top-1/2 -translate-y-1/2"></i>
                         </div>
@@ -256,20 +264,20 @@
                         </label>
                         <div class="relative">
                             <input type="password" name="password" id="password" required
-                                class="w-full bg-black/50 border border-gray-800 text-white rounded-bento-sm px-5 py-4 pl-12 focus:outline-none focus:border-bento-accent focus:ring-2 focus:ring-bento-accent/30 transition-all placeholder-gray-600"
+                                class="w-full bg-black/50 border border-gray-800 text-white rounded-bento-sm px-5 py-4 pl-12 focus:outline-none focus:border-bento-white-primary focus:ring-2 focus:ring-bento-white-primary/30 transition-all placeholder-gray-600"
                                 placeholder="••••••••">
                             <i data-feather="lock"
                                 class="w-5 h-5 text-gray-600 absolute left-5 top-1/2 -translate-y-1/2"></i>
                         </div>
                     </div>
 
-                    {{-- Remember Me & Forgot Password --}}
+                    {{-- Remember Me & Forgot Password (Disertakan untuk kelengkapan) --}}
                     <div class="flex items-center justify-between">
                         <label class="flex items-center gap-3 cursor-pointer">
                             <div class="relative">
                                 <input type="checkbox" name="remember" class="sr-only peer">
                                 <div
-                                    class="w-5 h-5 bg-black/50 border border-gray-700 rounded-md peer-checked:bg-bento-accent peer-checked:border-bento-accent flex items-center justify-center transition-colors">
+                                    class="w-5 h-5 bg-black/50 border border-gray-700 rounded-md peer-checked:bg-bento-accent-light peer-checked:border-bento-accent-light flex items-center justify-center transition-colors">
                                     <i data-feather="check" class="w-3 h-3 text-white hidden peer-checked:block"></i>
                                 </div>
                             </div>
@@ -277,38 +285,29 @@
                         </label>
 
                         <a href="#"
-                            class="text-sm text-bento-accent hover:text-bento-accent-light transition-colors font-medium">
+                            class="text-sm text-bento-white-secondary hover:text-white transition-colors font-medium">
                             Forgot password?
                         </a>
                     </div>
 
                     {{-- Submit Button --}}
                     <button type="submit"
-                        class="w-full bg-gradient-to-r from-bento-accent to-bento-accent-light text-white font-bold py-4 rounded-bento-sm hover:opacity-90 transition-all shadow-lg shadow-bento-accent/20 pulse-accent flex items-center justify-center gap-3 mt-8">
+                        class="w-full bg-gradient-to-r from-bento-accent to-bento-accent-light text-bento-white-primary font-bold py-4 rounded-bento-sm hover:opacity-90 transition-all shadow-lg shadow-bento-accent/20 pulse-accent flex items-center justify-center gap-3 mt-8">
                         <i data-feather="log-in" class="w-5 h-5"></i>
-                        Access Dashboard
+                        Access Staff Portal
                     </button>
                 </form>
 
                 {{-- Divider --}}
                 <div class="flex items-center my-8">
                     <div class="flex-1 h-px bg-gray-800"></div>
-                    <span class="px-4 text-sm text-gray-600">or continue with</span>
+                    <span class="px-4 text-sm text-gray-600">Secure Sign In</span>
                     <div class="flex-1 h-px bg-gray-800"></div>
                 </div>
 
                 {{-- Social Login Options --}}
-                <div class="grid grid-cols-2 gap-4">
-                    <a href="#"
-                        class="bg-black/50 border border-gray-800 rounded-bento-sm py-3 flex items-center justify-center gap-3 hover:bg-black/70 transition-colors">
-                        <i data-feather="github" class="w-5 h-5"></i>
-                        <span class="text-sm font-medium">GitHub</span>
-                    </a>
-                    <a href="#"
-                        class="bg-black/50 border border-gray-800 rounded-bento-sm py-3 flex items-center justify-center gap-3 hover:bg-black/70 transition-colors">
-                        <i data-feather="key" class="w-5 h-5"></i>
-                        <span class="text-sm font-medium">SSO</span>
-                    </a>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Internal Use Only</p>
                 </div>
             </div>
 
@@ -333,19 +332,19 @@
             inputs.forEach(input => {
                 // Add focus effects
                 input.addEventListener('focus', function() {
-                    this.parentElement.classList.add('ring-2', 'ring-bento-accent/20');
+                    this.parentElement.classList.add('ring-2', 'ring-bento-white-primary/20');
                 });
 
                 input.addEventListener('blur', function() {
-                    this.parentElement.classList.remove('ring-2', 'ring-bento-accent/20');
+                    this.parentElement.classList.remove('ring-2', 'ring-bento-white-primary/20');
                 });
 
                 // Add validation styling
                 input.addEventListener('input', function() {
                     if (this.value.trim() !== '') {
-                        this.classList.add('border-bento-accent/50');
+                        this.classList.add('border-bento-white-primary/50');
                     } else {
-                        this.classList.remove('border-bento-accent/50');
+                        this.classList.remove('border-bento-white-primary/50');
                     }
                 });
             });
