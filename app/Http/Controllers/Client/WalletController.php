@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Invoice;
 use Illuminate\Support\Str;
 use App\Models\TokenPrice;
+use App\Models\Tier;
 
 class WalletController extends Controller
 {
@@ -16,15 +17,18 @@ class WalletController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // 1. Ambil Data Wallet & Tier
+        // 1. Ambil Data Wallet & Tier Saat Ini
         $wallet = $user->wallet()->with('tier')->firstOrFail();
 
-        // 2. Ambil History Transaksi (Terbaru diatas)
+        // 2. Ambil History Transaksi
         $transactions = $wallet->transactions()
             ->orderBy('created_at', 'desc')
-            ->paginate(10); // 10 per halaman
+            ->paginate(10);
 
-        return view('client.wallet.index', compact('wallet', 'transactions'));
+        // 3. Ambil Semua Tier untuk Kalkulasi Progress (Urutkan dari terendah)
+        $tiers = Tier::orderBy('min_toratix', 'asc')->get();
+
+        return view('client.wallet.index', compact('wallet', 'transactions', 'tiers'));
     }
 
     // Halaman Form Topup

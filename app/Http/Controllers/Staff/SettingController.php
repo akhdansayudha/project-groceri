@@ -24,31 +24,34 @@ class SettingController extends Controller
 
         $request->validate([
             'full_name' => 'required|string|max:255',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Tambahkan mimes agar lebih spesifik
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if ($request->hasFile('avatar')) {
             try {
-                // 1. Simpan ke folder 'profiles' di disk 'supabase'
-                // Ini akan masuk ke bucket: chat-attachments/profiles/filename.jpg
+                // Hapus avatar lama jika bukan default (Opsional)
+                // if ($user->avatar_url && !str_contains($user->avatar_url, 'ui-avatars.com')) { ... }
+
+                // Simpan ke folder 'profiles' di bucket Supabase
                 $path = $request->file('avatar')->store('profiles', 'supabase');
 
-                // 2. Ambil URL Publik
                 /** @var \Illuminate\Filesystem\FilesystemAdapter $filesystem */
                 $filesystem = Storage::disk('supabase');
                 $url = $filesystem->url($path);
 
-                // 3. Simpan URL ke database
                 $user->avatar_url = $url;
             } catch (\Exception $e) {
-                return back()->withErrors(['avatar' => 'Gagal upload ke storage: ' . $e->getMessage()]);
+                return back()->withErrors(['avatar' => 'Gagal upload: ' . $e->getMessage()]);
             }
         }
 
-        $user->full_name = $request->full_name;
+        if ($request->filled('full_name')) {
+            $user->full_name = $request->full_name;
+        }
+
         $user->save();
 
-        return back()->with('success', 'Profil berhasil diperbarui.');
+        return back()->with('success', 'Public profile updated successfully.');
     }
 
     public function updateBank(Request $request)
@@ -68,7 +71,7 @@ class SettingController extends Controller
             'bank_holder' => $request->bank_holder,
         ]);
 
-        return back()->with('success', 'Detail pembayaran berhasil disimpan.');
+        return back()->with('success', 'Payment details saved successfully.');
     }
 
     public function updatePassword(Request $request)
@@ -77,20 +80,20 @@ class SettingController extends Controller
             'current_password' => 'required',
             'new_password' => 'required|string|min:8|confirmed|regex:/[a-z]/|regex:/[A-Z]/|regex:/[0-9]/',
         ], [
-            'new_password.regex' => 'Password baru harus mengandung huruf besar, huruf kecil, dan angka.'
+            'new_password.regex' => 'Password must contain mixed case letters and numbers.'
         ]);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
         if (!Hash::check($request->current_password, $user->password)) {
-            return back()->withErrors(['current_password' => 'Password saat ini tidak cocok.']);
+            return back()->withErrors(['current_password' => 'Incorrect current password.']);
         }
 
         $user->update([
             'password' => Hash::make($request->new_password),
         ]);
 
-        return back()->with('success', 'Kata sandi berhasil diubah.');
+        return back()->with('success', 'Security password updated successfully.');
     }
 }

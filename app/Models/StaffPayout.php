@@ -17,8 +17,12 @@ class StaffPayout extends Model
         'user_id',
         'amount_token',
         'amount_currency',
-        'status',      // pending, approved, rejected
-        'proof_file'   // URL/Path bukti transfer
+        'status',
+        'proof_url', // <--- PASTIKAN INI ADA
+        'admin_note',
+        'bank_name',
+        'bank_account',
+        'bank_holder'
     ];
 
     // Casting tipe data (Opsional, agar format data konsisten)

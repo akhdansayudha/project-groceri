@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Staff Portal - Vektora</title>
+
+    {{-- 1. TAILWIND CSS --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -17,7 +19,14 @@
             }
         }
     </script>
+
+    {{-- 2. ALPINE JS (INI YANG SEBELUMNYA HILANG) --}}
+    {{-- Wajib ada agar x-data, @click, x-show, x-model berfungsi --}}
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+    {{-- 3. FEATHER ICONS --}}
     <script src="https://unpkg.com/feather-icons"></script>
+
     <style>
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
@@ -35,6 +44,13 @@
 
         .fade-in {
             animation: fadeIn 0.4s ease-in-out;
+        }
+
+        /* Tambahkan style ini untuk mencegah "fouc" (flash of unstyled content)
+           Element dengan x-cloak akan disembunyikan sampai Alpine selesai loading
+        */
+        [x-cloak] {
+            display: none !important;
         }
 
         @keyframes fadeIn {

@@ -401,15 +401,77 @@
         </div>
     </div>
 
+    {{-- Pastikan SweetAlert2 sudah diload di layout utama, jika belum, uncomment baris bawah --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
+        // Fungsi untuk toggle form revisi (jika ada)
         function toggleRevisionForm() {
             const form = document.getElementById('revision-form');
             form.classList.toggle('hidden');
         }
 
-        // Script Confirm Cancel (Sama seperti sebelumnya)
+        // FUNGSI CONFIRM CANCEL DENGAN TEMA VEKTORA
         function confirmCancel(taskId) {
-            // ... (Kode Swal sama)
+            Swal.fire({
+                // 1. Konten & Icon
+                title: 'Cancel Project?',
+                // Menggunakan HTML untuk menonjolkan pesan refund
+                html: `
+                <div class="flex flex-col gap-2 mt-3">
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Are you sure you want to cancel this request? This action is irreversible.
+                    </p>
+                    {{-- Highlight Refund Info --}}
+                    <div class="bg-green-50 border border-green-100 rounded-xl p-3 flex items-center gap-3 text-left animate-pulse">
+                        <div class="bg-green-100 p-2 rounded-full text-green-600 shrink-0">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold uppercase text-green-700 tracking-wider">Refund Guarantee</p>
+                            <p class="text-xs font-bold text-green-900">100% Tokens will be refunded to your wallet.</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+                icon: 'warning',
+                // Warna icon warning disesuaikan dengan merah Vektora agar lebih 'waspada'
+                iconColor: '#dc2626', // Tailwind red-600
+
+                // 2. Konfigurasi Tombol
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Cancel Project',
+                cancelButtonText: 'No, Keep Project',
+                reverseButtons: true, // Tombol Cancel di kiri (abu), Confirm di kanan (merah)
+                focusCancel: true, // Fokus default ke tombol 'No' demi keamanan
+
+                // 3. KUSTOMISASI TEMA VEKTORA (PENTING)
+                buttonsStyling: false, // Matikan style bawaan SweetAlert
+                customClass: {
+                    // Container Modal
+                    popup: 'rounded-3xl shadow-2xl border border-gray-100 font-sans p-0 overflow-hidden',
+                    // Header
+                    title: 'text-gray-900 font-bold text-xl pt-8 px-8',
+                    // Body Content
+                    htmlContainer: 'px-8 pb-4',
+                    // Icon Warning (Diberi background merah muda halus)
+                    icon: 'border-red-100 bg-red-50 text-red-600 scale-90 mt-8 mx-auto mb-2',
+                    // Tombol Confirm (Merah Vektora - Destructive Action)
+                    confirmButton: 'w-full sm:w-auto bg-red-600 text-white rounded-xl font-bold text-sm px-6 py-3.5 hover:bg-red-700 focus:ring-4 focus:ring-red-200 transition-all shadow-lg shadow-red-500/30',
+                    // Tombol Cancel (Outline Gray Vektora - Safe Action)
+                    cancelButton: 'w-full sm:w-auto bg-white text-gray-700 border border-gray-200 rounded-xl font-bold text-sm px-6 py-3.5 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all',
+                    // Container Tombol
+                    actions: 'gap-3 px-8 pb-8 w-full flex-col-reverse sm:flex-row',
+                },
+                width: '420px', // Sedikit lebih ramping agar elegan
+
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Efek loading saat dikonfirmasi sebelum submit
+                    Swal.showLoading();
+                    document.getElementById('cancel-form-' + taskId).submit();
+                }
+            });
         }
     </script>
 @endsection

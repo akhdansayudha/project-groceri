@@ -196,14 +196,16 @@
                                 @if ($isCredit)
                                     {{-- Hijau untuk Credit (Topup, Bonus, Refund) --}}
                                     <span class="font-bold text-green-600 flex items-center justify-end gap-1">
-                                        +{{ number_format($trx->amount) }} <i data-feather="arrow-up-right"
-                                            class="w-3 h-3"></i>
+                                        {{-- Gunakan abs() agar tanda plus tidak dobel jika data DB positif --}}
+                                        +{{ number_format(abs($trx->amount)) }}
+                                        <i data-feather="arrow-up-right" class="w-3 h-3"></i>
                                     </span>
                                 @else
                                     {{-- Merah untuk Debit (Usage) --}}
                                     <span class="font-bold text-red-600 flex items-center justify-end gap-1">
-                                        -{{ number_format($trx->amount) }} <i data-feather="arrow-down-right"
-                                            class="w-3 h-3"></i>
+                                        {{-- Gunakan abs() agar angka negatif di DB diubah jadi positif dulu, lalu kita beri tanda minus --}}
+                                        -{{ number_format(abs($trx->amount)) }}
+                                        <i data-feather="arrow-down-right" class="w-3 h-3"></i>
                                     </span>
                                 @endif
                             </td>

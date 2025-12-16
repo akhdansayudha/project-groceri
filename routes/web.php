@@ -137,6 +137,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         // Custom Chat Routes untuk Admin
         Route::get('projects/{project}/chat', [AdminProjectController::class, 'chat'])->name('projects.chat');
         Route::post('projects/{project}/chat', [AdminProjectController::class, 'chatStore'])->name('projects.chat.store');
+        Route::delete('projects/{project}', [AdminProjectController::class, 'destroy'])->name('projects.destroy');
+        Route::post('projects/{project}/submit', [AdminProjectController::class, 'submitWork'])->name('projects.submit');
 
         // --- GROUP 3: LIVE MONITORING (WORKSPACES) ---
         Route::get('/workspaces', [AdminWorkspaceController::class, 'index'])->name('workspaces.index');
@@ -173,6 +175,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         Route::get('/performance', [StaffPerformanceController::class, 'index'])->name('performance.index');
         Route::get('/performance/{id}', [StaffPerformanceController::class, 'show'])->name('performance.show');
         Route::post('/performance/{id}/approve', [StaffPerformanceController::class, 'approvePayout'])->name('performance.approve');
+        Route::post('/performance/{id}/reject', [StaffPerformanceController::class, 'rejectPayout'])->name('performance.reject');
 
         Route::post('/performance/rate/update', [StaffPerformanceController::class, 'updateRate'])->name('performance.update_rate');
     });
@@ -225,6 +228,9 @@ Route::group(['prefix' => 'staff', 'as' => 'staff.'], function () {
         // Earnings & Payouts
         Route::get('/earnings', [StaffWalletController::class, 'index'])->name('finance.earnings');
         Route::post('/earnings/payout', [StaffWalletController::class, 'requestPayout'])->name('finance.payout');
+
+        // TAMBAHKAN INI UNTUK DETAIL PAYOUT
+        Route::get('/earnings/{id}', [StaffWalletController::class, 'show'])->name('finance.show');
 
         // SETTINGS
         Route::get('/settings', [StaffSettingController::class, 'index'])->name('settings');

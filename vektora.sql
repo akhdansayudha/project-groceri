@@ -104,6 +104,10 @@ CREATE TABLE public.staff_payouts (
   proof_url text,
   created_at timestamp without time zone DEFAULT now(),
   updated_at timestamp without time zone DEFAULT now(),
+  bank_name character varying,
+  bank_account character varying,
+  bank_holder character varying,
+  admin_note text,
   CONSTRAINT staff_payouts_pkey PRIMARY KEY (id),
   CONSTRAINT staff_payouts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );

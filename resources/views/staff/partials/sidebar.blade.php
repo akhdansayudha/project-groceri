@@ -34,10 +34,10 @@
                 </a>
 
                 {{-- My Tasks (Active) --}}
+                {{-- Menggunakan staff.projects.index sebagai acuan aktif --}}
                 <a href="{{ route('staff.projects.index') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group {{ request()->routeIs('staff.projects.*') ? 'bg-gray-800 text-white' : 'hover:bg-gray-900 hover:text-white' }}">
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group {{ request()->routeIs('staff.projects.index') || request()->routeIs('staff.projects.show') ? 'bg-white text-black font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'hover:bg-gray-900 hover:text-white' }}">
                     <div class="flex items-center gap-3 flex-1">
-                        {{-- Icon ganti jadi Briefcase atau tetap Layers --}}
                         <i data-feather="briefcase" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
                         <span>Active Projects</span>
                     </div>
@@ -51,9 +51,9 @@
 
                 {{-- Project History (Completed) --}}
                 <a href="{{ route('staff.projects.history') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {{ request()->routeIs('staff.projects.*') ? 'bg-black text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-black' }}">
-                    <i data-feather="clock" class="w-5 h-5"></i>
-                    <span class="font-bold text-sm">Project History</span>
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group {{ request()->routeIs('staff.projects.history') ? 'bg-white text-black font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'hover:bg-gray-900 hover:text-white' }}">
+                    <i data-feather="clock" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span>Project History</span>
                 </a>
             </div>
         </div>
@@ -64,7 +64,7 @@
                 <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Career & Finance
             </p>
             <div class="space-y-1">
-                {{-- Performance Report (Baru) --}}
+                {{-- Performance Report --}}
                 <a href="{{ route('staff.performance.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group {{ request()->routeIs('staff.performance.*') ? 'bg-white text-black font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'hover:bg-gray-900 hover:text-white' }}">
                     <i data-feather="bar-chart-2" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
@@ -86,9 +86,9 @@
                 <span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span> System
             </p>
             <div class="space-y-1">
-                {{-- Settings (Baru) --}}
+                {{-- Settings --}}
                 <a href="{{ route('staff.settings') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group {{ request()->routeIs('staff.settings.*') ? 'bg-white text-black font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'hover:bg-gray-900 hover:text-white' }}">
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group {{ request()->routeIs('staff.settings') ? 'bg-white text-black font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'hover:bg-gray-900 hover:text-white' }}">
                     <i data-feather="settings" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
                     <span>Account Settings</span>
                 </a>

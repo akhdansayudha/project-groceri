@@ -6,67 +6,60 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Task;
+use App\Models\Transaction;
 use App\Models\StaffPayout;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class StaffPerformanceController extends Controller
 {
     public function index(Request $request)
     {
         $search = $request->query('search');
-
-        // 1. AMBIL RATE PAYOUT SAAT INI
         $currentRate = DB::table('agency_settings')->where('id', 1)->value('payout_rate_per_token') ?? 10000;
 
-        // 2. QUERY STAFF
+        // 1. QUERY STAFF (LEADERBOARD) - FIX COUNT
         $staffQuery = User::where('role', 'staff')
             ->with(['wallet'])
-            ->withCount(['tasks as active_tasks_count' => function ($q) {
-                $q->whereIn('status', ['active', 'in_progress', 'review', 'revision']);
-            }])
-            ->withCount(['tasks as completed_tasks_count' => function ($q) {
-                $q->where('status', 'completed');
-            }])
-            // Hitung Total Payout IDR
+            // FIX: Gunakan addSelect subquery agar menghitung berdasarkan 'assignee_id', bukan 'user_id'
+            ->addSelect([
+                'completed_tasks_count' => Task::selectRaw('count(*)')
+                    ->whereColumn('assignee_id', 'users.id')
+                    ->where('status', 'completed')
+            ])
+            // Total Payout Approved
             ->withSum(['payouts as total_payout_idr' => function ($q) {
                 $q->where('status', 'approved');
             }], 'amount_currency');
 
         if ($search) {
-            $staffQuery->where(function($q) use ($search) {
+            $staffQuery->where(function ($q) use ($search) {
                 $q->where('full_name', 'ilike', "%{$search}%")
-                  ->orWhere('email', 'ilike', "%{$search}%");
+                    ->orWhere('email', 'ilike', "%{$search}%");
             });
         }
 
-        // FIX: SORTING LEADERBOARD (PostgreSQL Friendly)
-        // Kita gunakan orderByRaw dengan subquery yang sama persis agar PostgreSQL paham
-        $staffs = $staffQuery->orderByRaw('
-            (SELECT COALESCE(SUM(amount_currency), 0) 
-             FROM staff_payouts 
-             WHERE staff_payouts.user_id = users.id 
-             AND status = \'approved\') DESC
-        ')
-        ->paginate(10, ['*'], 'staff_page')
-        ->withQueryString();
+        $staffs = $staffQuery->orderByDesc('completed_tasks_count') // Sort by productivity
+            ->paginate(10, ['*'], 'staff_page')
+            ->withQueryString();
 
-        // 3. DATA PENDUKUNG LAINNYA
+        // 2. PENDING PAYOUTS (Pagination 10)
         $pendingPayouts = StaffPayout::where('status', 'pending')
-            ->with('user.wallet')
+            ->with('user')
             ->orderBy('created_at', 'asc')
-            ->get();
+            ->paginate(10, ['*'], 'pending_page');
 
-        $payoutHistory = StaffPayout::where('status', 'approved')
+        // 3. PAYOUT HISTORY (Pagination 10)
+        $payoutHistory = StaffPayout::whereIn('status', ['approved', 'rejected']) // Ambil Approved & Rejected
             ->with('user')
             ->orderBy('updated_at', 'desc')
-            ->limit(10)
-            ->get();
+            ->paginate(10, ['*'], 'history_page');
 
         $stats = [
             'pending_tx' => StaffPayout::where('status', 'pending')->sum('amount_token'),
-            'pending_count' => $pendingPayouts->count(),
+            'pending_count' => StaffPayout::where('status', 'pending')->count(), // Fix count tanpa pagination
             'total_paid_idr' => StaffPayout::where('status', 'approved')->sum('amount_currency'),
-            'current_rate' => $currentRate, 
+            'current_rate' => $currentRate,
         ];
 
         return view('admin.performance.index', compact('staffs', 'pendingPayouts', 'payoutHistory', 'stats', 'search'));
@@ -86,6 +79,73 @@ class StaffPerformanceController extends Controller
         );
 
         return back()->with('success', 'Staff payout rate updated successfully.');
+    }
+
+    // APPROVE PAYOUT (WITH PROOF UPLOAD)
+    public function approvePayout(Request $request, $id)
+    {
+        $request->validate([
+            'proof_file' => 'required|file|image|max:2048',
+            'admin_note' => 'nullable|string'
+        ]);
+
+        DB::transaction(function () use ($request, $id) {
+            $payout = StaffPayout::findOrFail($id);
+
+            // Validasi status
+            if ($payout->status != 'pending') return;
+
+            // 1. Upload Bukti ke folder 'payouts'
+            // Defaultnya return path relatif: "payouts/filename.jpg"
+            $path = $request->file('proof_file')->store('payouts', 'supabase');
+
+            // 2. Update Status Payout (FIXED)
+            $payout->update([
+                'status' => 'approved', // <--- UBAH DARI 'rejected' KE 'approved' / 'paid'
+                'proof_url' => $path,   // Path ini akan tersimpan
+                'admin_note' => $request->admin_note,
+                'updated_at' => now()
+            ]);
+        });
+
+        return back()->with('success', 'Payout approved & proof uploaded.');
+    }
+
+    // REJECT PAYOUT
+    public function rejectPayout(Request $request, $id)
+    {
+        $request->validate(['reject_reason' => 'required|string']);
+
+        DB::transaction(function () use ($request, $id) {
+            // Load payout beserta relasi user dan wallet-nya
+            $payout = StaffPayout::with('user.wallet')->findOrFail($id);
+
+            if ($payout->status != 'pending') return;
+
+            // 1. Update Status Payout jadi Rejected
+            $payout->update([
+                'status' => 'rejected',
+                'admin_note' => $request->reject_reason,
+                'updated_at' => now()
+            ]);
+
+            // 2. REFUND TOKEN KE WALLET STAFF
+            $payout->user->wallet->increment('balance', $payout->amount_token);
+
+            // 3. CATAT DI HISTORY TRANSAKSI (FIX)
+            // Ini agar muncul di Wallet Activity halaman staff
+            Transaction::create([
+                'wallet_id' => $payout->user->wallet->id,
+                'type' => 'refund', // Tipe transaksi refund
+                'amount' => $payout->amount_token, // Nilai positif karena uang masuk kembali
+                'description' => "Refund: Rejected Payout #PY-{$payout->id}",
+                'reference_id' => null, // Null karena ID Payout pakai BigInt, reference_id biasanya UUID
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        return back()->with('success', 'Payout rejected. Tokens refunded to staff.');
     }
 
     public function show($id)
@@ -126,34 +186,5 @@ class StaffPerformanceController extends Controller
             ->get();
 
         return view('admin.performance.show', compact('staff', 'stats', 'serviceStats', 'projects', 'payouts'));
-    }
-
-    // ... method approvePayout tetap sama ...
-    public function approvePayout(Request $request, $id)
-    {
-        $request->validate([
-            'amount_idr' => 'required|numeric|min:0', // Admin input nominal Rupiah real
-        ]);
-
-        DB::transaction(function () use ($request, $id) {
-            $payout = StaffPayout::findOrFail($id);
-
-            // Cek apakah sudah diapprove sebelumnya untuk mencegah double deduct
-            if ($payout->status != 'pending') {
-                return;
-            }
-
-            $payout->update([
-                'status' => 'approved',
-                'amount_currency' => $request->amount_idr,
-                'updated_at' => now()
-            ]);
-
-            // Kurangi Saldo Wallet Staff
-            $wallet = $payout->user->wallet;
-            $wallet->decrement('balance', $payout->amount_token);
-        });
-
-        return back()->with('success', 'Payout approved successfully.');
     }
 }

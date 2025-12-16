@@ -4,9 +4,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    {{-- TAMBAHKAN CSRF TOKEN --}}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>Admin Portal - Vektora</title>
 
-    {{-- GANTI @vite DENGAN CDN TAILWIND --}}
+    {{-- 1. TAILWIND CSS --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -20,9 +24,14 @@
         }
     </script>
 
+    {{-- 2. ALPINE JS (WAJIB UNTUK x-data, @click, x-show) --}}
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    {{-- 3. FEATHER ICONS --}}
     <script src="https://unpkg.com/feather-icons"></script>
 
     <style>
+        /* ... style custom scrollbar tetap sama ... */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -52,6 +61,11 @@
                 transform: translateY(0);
             }
         }
+
+        /* Tambahkan ini untuk mencegah kedipan pada elemen Alpine.js saat loading */
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -67,12 +81,19 @@
             {{-- INCLUDE HEADER --}}
             @include('admin.partials.header')
 
-            {{-- DYNAMIC CONTENT --}}
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-8">
-                @yield('content')
+            {{-- DYNAMIC CONTENT & FOOTER WRAPPER --}}
+            {{-- Ubah layout menjadi flex-col agar footer bisa didorong ke bawah --}}
+            <div class="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
 
-                {{-- INCLUDE FOOTER (Opsional) --}}
-                @include('admin.partials.footer')
+                {{-- Content Area: flex-1 akan membuatnya mengisi sisa ruang --}}
+                <div class="flex-1 p-8">
+                    @yield('content')
+                </div>
+
+                {{-- Footer Area: Menempel di bawah konten atau di dasar layar --}}
+                <div class="px-8">
+                    @include('admin.partials.footer')
+                </div>
             </div>
 
         </main>

@@ -8,58 +8,86 @@
         </div>
     </div>
 
-    {{-- LOGIC: Hitung Progress Tier & Stats --}}
+    {{-- LOGIC: Hitung Progress Per-Tier (FIXED) --}}
     @php
         $totalPurchased = $wallet->total_purchased ?? 0;
         $currentBalance = $wallet->balance ?? 0;
-        // Asumsi: Token terpakai = Total Beli - Saldo Saat Ini
-        // (Bisa disesuaikan jika ada logika refund yang kompleks, tapi ini estimasi kasar yang cukup akurat)
         $totalUsed = max(0, $totalPurchased - $currentBalance);
 
-        $currentTierName = $wallet->tier->name ?? 'Starter';
+        // 1. Urutkan Tier & Ambil Current Tier
+        $sortedTiers = $tiers->sortBy('min_toratix')->values();
+        $currentTier = $wallet->tier;
 
-        // Threshold Logic
-        $nextTierName = '';
-        $targetAmount = 0;
-        $progressPercent = 0;
+        // Cari posisi index tier saat ini di array sorted
+        $currentIdx = $sortedTiers->search(function ($t) use ($currentTier) {
+            return $t->id === $currentTier->id;
+        });
 
-        if ($totalPurchased < 50) {
-            $nextTierName = 'Professional';
-            $targetAmount = 50;
-        } elseif ($totalPurchased < 200) {
-            $nextTierName = 'Ultimate';
-            $targetAmount = 200;
+        // 2. Tentukan Next Tier & Max Level Status
+        $nextTier = null;
+        $isMaxLevel = false;
+
+        if ($currentIdx !== false && isset($sortedTiers[$currentIdx + 1])) {
+            $nextTier = $sortedTiers[$currentIdx + 1];
         } else {
-            $nextTierName = 'Max Level';
-            $targetAmount = $totalPurchased;
+            $isMaxLevel = true;
+        }
+
+        // 3. Kalkulasi Angka
+        $progressPercent = 0;
+        $remaining = 0;
+        $barStartLabel = 0;
+        $barEndLabel = 0;
+
+        if (!$isMaxLevel && $nextTier) {
+            // Target: Batas minimum untuk masuk tier berikutnya
+            $targetToLevelUp = $nextTier->min_toratix;
+
+            // Hitung sisa topup yang dibutuhkan
+            $remaining = max(0, $targetToLevelUp - $totalPurchased);
+
+            // Progress Bar Range: Dari Min ke Max pada tier SAAT INI
+            // Contoh Professional: 50 s/d 199.
+            $barStartLabel = $currentTier->min_toratix;
+            $barEndLabel = $currentTier->max_toratix;
+
+            // Hitung progress user di DALAM tier ini
+            // Rumus: (TotalUser - MinTierIni) / (MaxTierIni - MinTierIni) * 100
+            $userProgressInThisTier = $totalPurchased - $barStartLabel;
+            $tierRangeTotal = $barEndLabel - $barStartLabel;
+
+            if ($tierRangeTotal > 0) {
+                $progressPercent = ($userProgressInThisTier / $tierRangeTotal) * 100;
+            } else {
+                $progressPercent = 100;
+            }
+        } else {
+            // Sudah Max Tier
             $progressPercent = 100;
         }
 
-        if ($nextTierName !== 'Max Level') {
-            $remaining = $targetAmount - $totalPurchased;
-            $progressPercent = ($totalPurchased / $targetAmount) * 100;
-        } else {
-            $remaining = 0;
-        }
+        // Pastikan tidak minus atau lebih dari 100 visualnya
+        $progressPercent = min(100, max(0, $progressPercent));
     @endphp
 
+    {{-- GRID STATS --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 fade-in">
 
         {{-- CARD 1: AVAILABLE BALANCE (Main) --}}
         <div
-            class="bg-[#111] text-white p-6 rounded-3xl shadow-xl shadow-black/5 relative overflow-hidden group flex flex-col justify-between">
+            class="bg-[#0f0f0f] text-white p-6 rounded-3xl shadow-2xl shadow-black/20 relative overflow-hidden group flex flex-col justify-between border border-gray-800">
             <div
-                class="absolute top-0 right-0 w-32 h-32 bg-gray-800 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity">
+                class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-gray-800 to-transparent rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity">
             </div>
 
             <div>
-                <div class="flex items-center gap-2 mb-2">
+                <div class="flex items-center gap-2 mb-3">
                     <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                     <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Available Balance</p>
                 </div>
                 <div class="flex items-baseline gap-1">
                     <h2 class="text-4xl font-bold tracking-tight">{{ number_format($currentBalance) }}</h2>
-                    <span class="text-lg font-bold text-yellow-400">TX</span>
+                    <span class="text-lg font-bold text-yellow-500">TX</span>
                 </div>
             </div>
 
@@ -109,61 +137,146 @@
         </div>
     </div>
 
-    {{-- TIER PROGRESS SECTION (Wide) --}}
+    {{-- TIER PROGRESS SECTION (EXCLUSIVE DARK & GOLD DESIGN) --}}
     <div class="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm mb-8 fade-in relative overflow-hidden">
+        {{-- Background Effects --}}
         <div
-            class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-50 to-transparent rounded-full blur-3xl opacity-50 pointer-events-none">
+            class="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-b from-gray-50 via-gray-50 to-transparent rounded-full blur-3xl opacity-60 pointer-events-none -mr-20 -mt-20">
         </div>
 
-        <div class="relative z-10 flex flex-col md:flex-row gap-8 items-center">
-            {{-- Left: Current Badge --}}
+        <div class="relative z-10 flex flex-col md:flex-row gap-10 items-center">
+
+            {{-- Left: EXCLUSIVE BADGE DESIGN --}}
             <div class="flex-shrink-0 text-center md:text-left">
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Current Tier</span>
-                <div class="inline-flex items-center gap-3 px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl">
-                    <div class="w-8 h-8 flex items-center justify-center">
-                        @if (stripos($currentTierName, 'Ultimate') !== false)
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-yellow-600" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-crown">
-                                <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
-                            </svg>
-                        @elseif(stripos($currentTierName, 'Professional') !== false)
-                            <i data-feather="star" class="w-6 h-6 text-indigo-600"></i>
-                        @else
-                            <i data-feather="shield" class="w-6 h-6 text-gray-600"></i>
-                        @endif
+                <span
+                    class="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-4 block text-center md:text-left">Current
+                    Membership</span>
+
+                @php
+                    $tierName = $currentTier->name ?? 'Starter';
+                    // Cek jika Ultimate/Max level untuk efek khusus
+                    $isUltimate = stripos($tierName, 'Ultimate') !== false || $isMaxLevel;
+                @endphp
+
+                <div class="relative group cursor-default inline-block">
+                    {{-- Glow Effect belakang badge (Gold untuk semua agar exclusive) --}}
+                    <div
+                        class="absolute -inset-0.5 bg-gradient-to-r from-[#C6A355] to-[#F2E49B] rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000">
                     </div>
-                    <span class="text-xl font-bold text-gray-900">{{ $currentTierName }}</span>
+
+                    {{-- Badge Container --}}
+                    <div
+                        class="relative w-[240px] h-[150px] bg-[#0F0F0F] rounded-2xl border border-yellow-900/30 flex flex-col items-center justify-center shadow-2xl overflow-hidden">
+
+                        {{-- Pattern Overlay --}}
+                        <div class="absolute inset-0 opacity-10"
+                            style="background-image: radial-gradient(#C6A355 1px, transparent 1px); background-size: 12px 12px;">
+                        </div>
+
+                        {{-- Icon --}}
+                        <div class="mb-3 relative z-10">
+                            @if ($isUltimate)
+                                <div
+                                    class="p-3 rounded-full bg-gradient-to-b from-[#8E793E] to-[#AD974F] shadow-lg shadow-yellow-900/50">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" viewBox="0 0 24 24"
+                                        fill="currentColor">
+                                        <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
+                                    </svg>
+                                </div>
+                            @else
+                                <div
+                                    class="p-3 rounded-full bg-gradient-to-b from-gray-800 to-black border border-gray-700 shadow-lg">
+                                    <i data-feather="shield" class="w-6 h-6 text-[#C6A355]"></i>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Text Gradient Gold/Silver --}}
+                        <span
+                            class="text-xl font-black tracking-[0.2em] uppercase relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-[#C6A355] via-[#F2E49B] to-[#C6A355] drop-shadow-sm">
+                            {{ $tierName }}
+                        </span>
+
+                        {{-- Underline --}}
+                        <div
+                            class="h-[1px] w-12 bg-gradient-to-r from-transparent via-[#C6A355] to-transparent mt-3 opacity-70">
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {{-- Right: Progress Bar --}}
-            <div class="flex-1 w-full">
-                @if ($nextTierName !== 'Max Level')
-                    <div class="flex justify-between items-end mb-2">
-                        <div>
-                            <p class="text-sm font-bold text-gray-900">Unlock {{ $nextTierName }} Plan</p>
-                            <p class="text-xs text-gray-500 mt-0.5">Top up <strong
-                                    class="text-black">{{ number_format($remaining) }} TX</strong> more to upgrade.</p>
+            {{-- Right: Progress Bar & Info --}}
+            <div class="flex-1 w-full pl-0 md:pl-4">
+                @if (!$isMaxLevel && $nextTier)
+                    {{-- NOT MAX LEVEL VIEW --}}
+                    <div class="mb-6">
+                        <div class="flex items-center gap-2 mb-2">
+                            <h4 class="text-xl font-bold text-gray-900">Menuju {{ $nextTier->name }}</h4>
+                            <span
+                                class="bg-black text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">Next
+                                Tier</span>
                         </div>
-                        <span class="text-2xl font-bold text-gray-200">{{ round($progressPercent) }}%</span>
+                        <p class="text-sm text-gray-600 leading-relaxed max-w-xl">
+                            Top up sebanyak <strong
+                                class="text-black bg-yellow-100 px-1 rounded">{{ number_format($remaining) }} TX</strong>
+                            lagi untuk mencapai tier {{ $nextTier->name }}.
+                        </p>
                     </div>
 
-                    <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                        <div class="bg-black h-full rounded-full transition-all duration-1000 relative"
-                            style="width: {{ $progressPercent }}%">
-                            <div class="absolute inset-0 bg-white/20 w-full h-full animate-pulse"></div>
+                    {{-- Progress Bar Container --}}
+                    <div class="relative pt-2">
+                        <div class="flex justify-between text-xs font-bold text-gray-400 mb-2">
+                            <span>{{ number_format($barStartLabel) }} TX ({{ $currentTier->name }})</span>
+                            <span class="text-black">{{ number_format($barEndLabel) }} TX</span>
+                        </div>
+
+                        {{-- Bar Background --}}
+                        <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden border border-gray-200">
+                            {{-- Bar Fill (Gradient Gold) --}}
+                            <div class="h-full rounded-full transition-all duration-1000 relative bg-gradient-to-r from-[#8E793E] via-[#C6A355] to-[#F2E49B] shadow-[0_0_10px_rgba(198,163,85,0.5)]"
+                                style="width: {{ $progressPercent }}%">
+                                <div class="absolute inset-0 bg-white/20 w-full h-full animate-[pulse_3s_infinite]"></div>
+                            </div>
+                        </div>
+                        <div class="text-right mt-1">
+                            <span class="text-[10px] font-bold text-gray-400">{{ round($progressPercent) }}%
+                                Completed</span>
                         </div>
                     </div>
+
+                    {{-- Benefit Teaser --}}
+                    <div
+                        class="mt-6 flex items-center gap-3 text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100 w-fit">
+                        <div class="bg-white p-1.5 rounded-lg border border-gray-200 shadow-sm"><i data-feather="unlock"
+                                class="w-3 h-3 text-black"></i></div>
+                        <span>Unlock <strong>{{ $nextTier->max_active_tasks }} Active Tasks</strong> limit at
+                            {{ $nextTier->name }} level.</span>
+                    </div>
                 @else
-                    <div class="flex items-center gap-4">
-                        <div class="p-3 bg-yellow-100 rounded-full text-yellow-700">
-                            <i data-feather="award" class="w-6 h-6"></i>
+                    {{-- MAX LEVEL ACHIEVEMENT VIEW --}}
+                    <div
+                        class="bg-[#0a0a0a] rounded-2xl p-8 relative overflow-hidden border border-[#C6A355]/30 shadow-2xl">
+                        {{-- Ambient Light --}}
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-[#C6A355] rounded-full blur-[120px] opacity-20">
                         </div>
-                        <div>
-                            <h4 class="font-bold text-gray-900">Legendary Status!</h4>
-                            <p class="text-sm text-gray-500">Anda telah mencapai tier tertinggi. Nikmati seluruh benefit
-                                eksklusif.</p>
+
+                        <div class="relative z-10 flex flex-col md:flex-row items-start gap-6">
+                            <div
+                                class="p-4 bg-gradient-to-br from-[#8E793E] to-[#C6A355] rounded-2xl text-white shadow-lg shadow-[#C6A355]/20">
+                                <i data-feather="award" class="w-10 h-10"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-2xl font-bold text-white flex flex-wrap items-center gap-3 mb-2">
+                                    {{ $currentTier->name }} Achieved!
+                                    <span
+                                        class="text-[10px] bg-[#F2E49B] text-black px-2 py-0.5 rounded font-black tracking-widest uppercase shadow-md">Highest
+                                        Tier</span>
+                                </h4>
+                                <p class="text-sm text-gray-400 leading-relaxed max-w-lg">
+                                    Luar biasa! Anda telah mencapai tier tertinggi di Vektora. Nikmati prioritas layanan
+                                    tertinggi, batas project maksimal, dan akses eksklusif ke semua fitur kami.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 @endif

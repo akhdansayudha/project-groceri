@@ -74,17 +74,22 @@
                 </div>
             </div>
 
-            @php
-                $lastDate = null;
-            @endphp
-
             @forelse($task->messages as $msg)
                 @php
                     $isMe = $msg->sender_id === Auth::id();
+                    $senderRole = $msg->user->role ?? 'unknown';
 
                     // Logic Deteksi Pesan Revisi
                     $isRevisionMsg = Str::startsWith($msg->content, 'REVISION REQUESTED:');
                     $cleanContent = str_replace('REVISION REQUESTED:', '', $msg->content);
+
+                    // Logic Warna Badge Role
+                    $roleBadge = match ($senderRole) {
+                        'client' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'label' => 'Client'],
+                        'staff' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'label' => 'Staff'],
+                        'admin' => ['bg' => 'bg-black', 'text' => 'text-white', 'label' => 'Admin'],
+                        default => ['bg' => 'bg-gray-100', 'text' => 'text-gray-600', 'label' => 'User'],
+                    };
                 @endphp
 
                 {{-- TAMPILAN KHUSUS UNTUK REVISION NOTES --}}
@@ -142,11 +147,21 @@
                             </div>
 
                             <div>
-                                {{-- Name Label --}}
-                                <div class="flex items-end gap-2 mb-1 {{ $isMe ? 'justify-end' : '' }}">
-                                    <span class="text-[10px] text-gray-400 font-bold">
-                                        {{ $isMe ? 'You' : $msg->user->full_name }}
-                                    </span>
+                                {{-- Name & Role Label --}}
+                                <div class="flex items-center gap-2 mb-1 {{ $isMe ? 'justify-end' : 'justify-start' }}">
+                                    @if ($isMe)
+                                        <span class="text-xs text-gray-400 font-bold">You</span>
+                                    @else
+                                        {{-- Badge Role --}}
+                                        <span
+                                            class="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase {{ $roleBadge['bg'] }} {{ $roleBadge['text'] }}">
+                                            {{ $roleBadge['label'] }}
+                                        </span>
+                                        {{-- Nama Pengirim --}}
+                                        <span class="text-xs text-gray-500 font-bold">
+                                            {{ $msg->user->full_name }}
+                                        </span>
+                                    @endif
                                 </div>
 
                                 {{-- Bubble Chat --}}

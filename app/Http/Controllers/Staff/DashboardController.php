@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Task;
 use App\Models\StaffPayout;
+use App\Models\Notification;
 
 class DashboardController extends Controller
 {
@@ -15,12 +16,9 @@ class DashboardController extends Controller
         /** @var \App\Models\User $staff */
         $staff = Auth::user();
 
-        // --- SECURITY CHECK (Satpam Kedua) ---
-        // Mencegah Client atau Admin 'nyasar' masuk ke halaman Staff via URL
         if ($staff->role !== 'staff') {
             abort(403, 'Akses Ditolak. Halaman ini khusus untuk Staff Vektora.');
         }
-        // -------------------------------------
 
         // Eager load wallet untuk efisiensi query
         $staff->load('wallet');
@@ -59,6 +57,15 @@ class DashboardController extends Controller
             ->take(3)
             ->get();
 
-        return view('staff.dashboard.index', compact('stats', 'recentTasks', 'recentPayouts'));
+        $notifications = Notification::where('user_id', $staffId)
+            ->orderBy('created_at', 'desc')
+            ->take(10) // Batasi 10 notifikasi terbaru agar tidak berat
+            ->get();
+
+        $unreadCount = Notification::where('user_id', $staffId)
+            ->where('is_read', false)
+            ->count();
+
+        return view('staff.dashboard.index', compact('stats', 'recentTasks', 'recentPayouts', 'notifications', 'unreadCount'));
     }
 }
