@@ -4,364 +4,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - Vektora Agency</title>
+    <title>Control Tower - Vektora Agency</title>
 
-    {{-- GANTI VITE DENGAN CDN AGAR TIDAK PERLU NPM RUN BUILD --}}
+    {{-- CDN Tailwind & Alpine --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+                        sans: ['Manrope', 'sans-serif'], // Menggunakan font Manrope agar konsisten
+                        mono: ['JetBrains Mono', 'monospace'],
                     },
                     colors: {
-                        bento: {
-                            dark: '#0a0a0a',
-                            card: '#111111',
-                            accent: '#8b5cf6',
-                            'accent-light': '#a78bfa',
+                        luxury: {
+                            black: '#050505',
+                            card: '#0F0F0F',
+                            border: '#1F1F1F',
+                            input: '#141414',
+                            white: '#FFFFFF',
+                            muted: '#666666'
                         }
                     },
-                    borderRadius: {
-                        'bento': '1.5rem',
-                        'bento-sm': '1rem',
-                        'bento-lg': '2rem',
+                    animation: {
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': {
+                                opacity: '0',
+                                transform: 'translateY(10px)'
+                            },
+                            '100%': {
+                                opacity: '1',
+                                transform: 'translateY(0)'
+                            },
+                        },
+                        float: {
+                            '0%, 100%': {
+                                transform: 'translateY(0)'
+                            },
+                            '50%': {
+                                transform: 'translateY(-10px)'
+                            },
+                        }
                     }
                 }
             }
         }
     </script>
-
     <script src="https://unpkg.com/feather-icons"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        * {
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: #fff;
         }
 
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+        /* Noise Texture Overlay */
+        .noise-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
-        .slide-in-left {
-            animation: slideInLeft 0.7s ease-out;
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .slide-in-right {
-            animation: slideInRight 0.7s ease-out 0.2s both;
-        }
-
-        .bento-grid {
-            background-image:
-                linear-gradient(to right, rgba(139, 92, 246, 0.05) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(139, 92, 246, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-
-        .pulse-accent {
-            animation: pulse 2s infinite;
-        }
-
-        .hover-lift {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .hover-lift:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideInLeft {
-            from {
-                transform: translateX(-30px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(30px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
-            }
-
-            70% {
-                box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
-            }
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 1024px) {
-            .split-layout {
-                flex-direction: column;
-            }
-
-            .left-panel {
-                padding: 3rem 1.5rem !important;
-            }
-
-            .right-panel {
-                padding: 2rem 1.5rem !important;
-            }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #141414 inset !important;
+            -webkit-text-fill-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
         }
     </style>
 </head>
 
-<body class="bg-bento-dark text-gray-300 font-sans antialiased min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
 
-    <div class="w-full max-w-6xl bg-bento-card rounded-bento-lg overflow-hidden shadow-2xl flex split-layout fade-in">
+    <div class="noise-bg"></div>
 
-        {{-- Left Panel: Creative Showcase --}}
+    {{-- Background Glow Effects --}}
+    <div class="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-white rounded-full blur-[180px] opacity-[0.03]">
+    </div>
+    <div
+        class="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-gray-500 rounded-full blur-[150px] opacity-[0.05]">
+    </div>
+
+    {{-- MAIN CONTAINER (BENTO LAYOUT) --}}
+    <div
+        class="w-full max-w-[1400px] min-h-[700px] grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 animate-fade-in">
+
+        {{-- LEFT PANEL: STATS & VISUALS (REALTIME DATA) --}}
+        @php
+            // MENGAMBIL DATA REALTIME DARI DATABASE
+            // Menggunakan try-catch agar jika tabel belum ada tidak error fatal
+            try {
+                $totalProjects = \App\Models\Task::count();
+                $activeClients = \App\Models\User::where('role', 'client')->count();
+                $totalWorkspaces = \App\Models\Workspace::count();
+                $pendingTasks = \App\Models\Task::where('status', 'queue')->count();
+            } catch (\Exception $e) {
+                $totalProjects = 0;
+                $activeClients = 0;
+                $totalWorkspaces = 0;
+                $pendingTasks = 0;
+            }
+        @endphp
+
         <div
-            class="w-1/2 bg-gradient-to-br from-bento-dark to-gray-900 p-12 flex flex-col justify-between relative overflow-hidden left-panel slide-in-left">
-            {{-- Bento Grid Background --}}
-            <div class="absolute inset-0 bento-grid opacity-20"></div>
+            class="lg:col-span-7 glass-panel rounded-[2.5rem] p-10 flex flex-col justify-between relative overflow-hidden group">
 
-            {{-- Decorative Elements --}}
-            <div
-                class="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-gradient-to-br from-bento-accent to-transparent opacity-10">
-            </div>
-            <div
-                class="absolute bottom-10 left-10 w-32 h-32 rounded-bento bg-gradient-to-tr from-bento-accent to-transparent opacity-5">
-            </div>
-
-            {{-- Content --}}
+            {{-- Header Visual --}}
             <div class="relative z-10">
                 <div class="flex items-center gap-3 mb-8">
                     <div
-                        class="w-12 h-12 bg-white text-black rounded-bento-sm flex items-center justify-center shadow-lg">
-                        <span class="text-2xl font-bold tracking-tighter">V.</span>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-bold text-white">Vektora</h1>
-                        <p class="text-xs text-gray-500">Creative Agency</p>
-                    </div>
+                        class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-black font-bold text-xl tracking-tighter">
+                        V.</div>
+                    <span class="text-sm font-mono tracking-widest text-gray-400 uppercase">Control Tower</span>
                 </div>
 
-                <h2 class="text-3xl font-bold text-white mb-6 leading-tight">
-                    Where <span class="text-bento-accent">Creativity</span><br>
-                    Meets <span class="text-bento-accent">Strategy</span>
-                </h2>
-
-                <p class="text-gray-400 mb-8 max-w-md">
-                    Welcome back to the creative command center. Access tools to manage projects, collaborate with
-                    teams, and bring visionary ideas to life.
+                <h1 class="text-5xl md:text-7xl font-bold tracking-tighter leading-[0.9] mb-4">
+                    Orchestrate <br> <span class="text-gray-500">Excellence.</span>
+                </h1>
+                <p class="text-gray-400 max-w-md font-light">
+                    Welcome back, Admin. Your central command for managing Vektora's creative operations.
                 </p>
-
-                {{-- Bento Stats --}}
-                <div class="grid grid-cols-3 gap-4 mb-10">
-                    <div class="bg-black/40 backdrop-blur-sm rounded-bento-sm p-4 text-center border border-gray-800">
-                        <div class="text-2xl font-bold text-white">42+</div>
-                        <div class="text-xs text-gray-500">Projects</div>
-                    </div>
-                    <div class="bg-black/40 backdrop-blur-sm rounded-bento-sm p-4 text-center border border-gray-800">
-                        <div class="text-2xl font-bold text-white">18</div>
-                        <div class="text-xs text-gray-500">Team Members</div>
-                    </div>
-                    <div class="bg-black/40 backdrop-blur-sm rounded-bento-sm p-4 text-center border border-gray-800">
-                        <div class="text-2xl font-bold text-white">96%</div>
-                        <div class="text-xs text-gray-500">Satisfaction</div>
-                    </div>
-                </div>
             </div>
 
-            {{-- Footer Note --}}
-            <div class="relative z-10">
-                <div class="flex items-center gap-3 text-gray-500 text-sm">
-                    <i data-feather="shield" class="w-4 h-4"></i>
-                    <span>Secure admin portal with end-to-end encryption</span>
+            {{-- Bento Grid Stats (Realtime) --}}
+            <div class="grid grid-cols-2 gap-4 mt-12 relative z-10">
+
+                {{-- Card 1: Projects --}}
+                <div
+                    class="bg-[#0A0A0A] p-6 rounded-3xl border border-white/5 hover:border-white/20 transition-all duration-500 group/card">
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="p-2 bg-white/5 rounded-full text-gray-400 group-hover/card:text-white transition-colors">
+                            <i data-feather="layers" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[10px] uppercase tracking-widest text-gray-500">All Time</span>
+                    </div>
+                    <div class="text-4xl font-bold text-white mb-1">{{ number_format($totalProjects) }}</div>
+                    <div class="text-xs text-gray-500 font-medium">Projects Delivered</div>
                 </div>
+
+                {{-- Card 2: Pending (Attention) --}}
+                <div
+                    class="bg-white text-black p-6 rounded-3xl border border-white transition-all duration-500 relative overflow-hidden">
+                    <div
+                        class="absolute right-0 top-0 w-24 h-24 bg-gray-200 rounded-full blur-2xl opacity-50 -mr-5 -mt-5">
+                    </div>
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <div class="p-2 bg-black/10 rounded-full text-black">
+                            <i data-feather="clock" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[10px] uppercase tracking-widest text-gray-600 font-bold">Action Needed</span>
+                    </div>
+                    <div class="text-4xl font-bold text-black mb-1 relative z-10">{{ $pendingTasks }}</div>
+                    <div class="text-xs text-gray-600 font-bold relative z-10">Pending Requests</div>
+                </div>
+
+                {{-- Card 3: Clients --}}
+                <div
+                    class="bg-[#0A0A0A] p-6 rounded-3xl border border-white/5 hover:border-white/20 transition-all duration-500 group/card">
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="p-2 bg-white/5 rounded-full text-gray-400 group-hover/card:text-white transition-colors">
+                            <i data-feather="users" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="text-4xl font-bold text-white mb-1">{{ number_format($activeClients) }}</div>
+                    <div class="text-xs text-gray-500 font-medium">Active Clients</div>
+                </div>
+
+                {{-- Card 4: Workspaces --}}
+                <div
+                    class="bg-[#0A0A0A] p-6 rounded-3xl border border-white/5 hover:border-white/20 transition-all duration-500 group/card">
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="p-2 bg-white/5 rounded-full text-gray-400 group-hover/card:text-white transition-colors">
+                            <i data-feather="grid" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="text-4xl font-bold text-white mb-1">{{ number_format($totalWorkspaces) }}</div>
+                    <div class="text-xs text-gray-500 font-medium">Workspaces</div>
+                </div>
+
+            </div>
+
+            {{-- Decorative Gradient --}}
+            <div
+                class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black to-transparent opacity-80 pointer-events-none">
             </div>
         </div>
 
-        {{-- Right Panel: Login Form --}}
-        <div class="w-1/2 p-12 flex flex-col justify-center right-panel slide-in-right">
-            {{-- Login Header --}}
-            <div class="text-center mb-10">
-                <h1 class="text-2xl font-bold text-white mb-2">Admin Access</h1>
-                <p class="text-gray-500">Sign in to manage your creative workspace</p>
+        {{-- RIGHT PANEL: LOGIN FORM --}}
+        <div
+            class="lg:col-span-5 bg-luxury-card rounded-[2.5rem] p-10 md:p-14 border border-luxury-border flex flex-col justify-center relative shadow-2xl">
+
+            <div class="absolute top-10 right-10">
+                <a href="{{ route('home') }}"
+                    class="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 group"
+                    title="Back to Home">
+                    <i data-feather="arrow-up-right"
+                        class="w-5 h-5 group-hover:rotate-45 transition-transform duration-300"></i>
+                </a>
             </div>
 
-            {{-- Error Message --}}
+            <div class="mb-10">
+                <h2 class="text-3xl font-bold text-white mb-2">Identify Yourself.</h2>
+                <p class="text-gray-500 text-sm">Access to admin panel is restricted.</p>
+            </div>
+
+            {{-- Error Alerts --}}
             @if ($errors->any())
-                <div
-                    class="bg-red-900/20 border border-red-900/50 text-red-400 px-5 py-4 rounded-bento-sm mb-6 text-sm font-medium flex items-center gap-3">
-                    <i data-feather="alert-circle" class="w-5 h-5"></i>
-                    <span>{{ $errors->first() }}</span>
+                <div class="mb-6 p-4 rounded-2xl bg-white/5 border border-red-900/30 flex items-start gap-3">
+                    <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mt-0.5"></i>
+                    <div class="text-sm text-red-400">
+                        <span class="font-bold block mb-1">Access Denied</span>
+                        {{ $errors->first() }}
+                    </div>
                 </div>
             @endif
 
-            {{-- Login Card --}}
-            <div class="bg-bento-dark border border-gray-800 rounded-bento p-8 hover-lift">
-                <form action="{{ route('admin.login.post') }}" method="POST" class="space-y-6">
-                    @csrf
+            <form action="{{ route('admin.login.post') }}" method="POST" class="space-y-6">
+                @csrf
 
-                    {{-- Email Field --}}
-                    <div>
-                        <label for="email"
-                            class="block text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
-                            <i data-feather="user" class="w-4 h-4"></i>
-                            Email Address
-                        </label>
-                        <div class="relative">
-                            <input type="email" name="email" id="email" required autofocus
-                                class="w-full bg-black/50 border border-gray-800 text-white rounded-bento-sm px-5 py-4 pl-12 focus:outline-none focus:border-bento-accent focus:ring-2 focus:ring-bento-accent/30 transition-all placeholder-gray-600"
-                                placeholder="admin@vektora.id">
-                            <i data-feather="mail"
-                                class="w-5 h-5 text-gray-600 absolute left-5 top-1/2 -translate-y-1/2"></i>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase tracking-widest text-gray-500 ml-1">Email</label>
+                    <div class="relative group">
+                        <input type="email" name="email" required autofocus
+                            class="w-full bg-luxury-input border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-gray-700 outline-none focus:border-white/40 focus:bg-luxury-input/80 transition-all duration-300 font-medium"
+                            placeholder="admin@vektora.id">
+                        <div
+                            class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-white transition-colors">
+                            <i data-feather="mail" class="w-4 h-4"></i>
                         </div>
                     </div>
+                </div>
 
-                    {{-- Password Field --}}
-                    <div>
-                        <label for="password"
-                            class="block text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
-                            <i data-feather="key" class="w-4 h-4"></i>
-                            Password
-                        </label>
-                        <div class="relative">
-                            <input type="password" name="password" id="password" required
-                                class="w-full bg-black/50 border border-gray-800 text-white rounded-bento-sm px-5 py-4 pl-12 focus:outline-none focus:border-bento-accent focus:ring-2 focus:ring-bento-accent/30 transition-all placeholder-gray-600"
-                                placeholder="••••••••">
-                            <i data-feather="lock"
-                                class="w-5 h-5 text-gray-600 absolute left-5 top-1/2 -translate-y-1/2"></i>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase tracking-widest text-gray-500 ml-1">Password</label>
+                    <div class="relative group">
+                        <input type="password" name="password" required
+                            class="w-full bg-luxury-input border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-gray-700 outline-none focus:border-white/40 focus:bg-luxury-input/80 transition-all duration-300 font-medium tracking-widest"
+                            placeholder="••••••••">
+                        <div
+                            class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-white transition-colors">
+                            <i data-feather="lock" class="w-4 h-4"></i>
                         </div>
                     </div>
+                </div>
 
-                    {{-- Remember Me & Forgot Password --}}
-                    <div class="flex items-center justify-between">
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <div class="relative">
-                                <input type="checkbox" name="remember" class="sr-only peer">
-                                <div
-                                    class="w-5 h-5 bg-black/50 border border-gray-700 rounded-md peer-checked:bg-bento-accent peer-checked:border-bento-accent flex items-center justify-center transition-colors">
-                                    <i data-feather="check" class="w-3 h-3 text-white hidden peer-checked:block"></i>
-                                </div>
+                <div class="flex items-center justify-between pt-2">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <div class="relative">
+                            <input type="checkbox" name="remember" class="sr-only peer">
+                            <div
+                                class="w-5 h-5 border border-white/20 rounded-md peer-checked:bg-white peer-checked:border-white transition-all">
                             </div>
-                            <span class="text-sm text-gray-400">Remember me</span>
-                        </label>
-
-                        <a href="#"
-                            class="text-sm text-bento-accent hover:text-bento-accent-light transition-colors font-medium">
-                            Forgot password?
-                        </a>
-                    </div>
-
-                    {{-- Submit Button --}}
-                    <button type="submit"
-                        class="w-full bg-gradient-to-r from-bento-accent to-bento-accent-light text-white font-bold py-4 rounded-bento-sm hover:opacity-90 transition-all shadow-lg shadow-bento-accent/20 pulse-accent flex items-center justify-center gap-3 mt-8">
-                        <i data-feather="log-in" class="w-5 h-5"></i>
-                        Access Dashboard
-                    </button>
-                </form>
-
-                {{-- Divider --}}
-                <div class="flex items-center my-8">
-                    <div class="flex-1 h-px bg-gray-800"></div>
-                    <span class="px-4 text-sm text-gray-600">or continue with</span>
-                    <div class="flex-1 h-px bg-gray-800"></div>
+                            <i data-feather="check"
+                                class="w-3 h-3 text-black absolute top-1 left-1 opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                        </div>
+                        <span class="text-sm text-gray-500 group-hover:text-gray-300 transition-colors">Remember
+                            session</span>
+                    </label>
                 </div>
 
-                {{-- Social Login Options --}}
-                <div class="grid grid-cols-2 gap-4">
-                    <a href="#"
-                        class="bg-black/50 border border-gray-800 rounded-bento-sm py-3 flex items-center justify-center gap-3 hover:bg-black/70 transition-colors">
-                        <i data-feather="github" class="w-5 h-5"></i>
-                        <span class="text-sm font-medium">GitHub</span>
-                    </a>
-                    <a href="#"
-                        class="bg-black/50 border border-gray-800 rounded-bento-sm py-3 flex items-center justify-center gap-3 hover:bg-black/70 transition-colors">
-                        <i data-feather="key" class="w-5 h-5"></i>
-                        <span class="text-sm font-medium">SSO</span>
-                    </a>
-                </div>
+                <button type="submit"
+                    class="w-full bg-white text-black font-bold text-lg py-4 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] mt-4 flex items-center justify-center gap-3">
+                    <span>Enter Dashboard</span>
+                    <i data-feather="arrow-right" class="w-5 h-5"></i>
+                </button>
+
+            </form>
+
+            <div class="mt-12 pt-8 border-t border-white/5 text-center">
+                <p class="text-xs text-gray-600 font-mono">
+                    SECURE SYSTEM • ENCRYPTED CONNECTION
+                </p>
             </div>
 
-            {{-- Back to Home Link --}}
-            <div class="text-center mt-10">
-                <a href="{{ route('home') }}"
-                    class="text-gray-500 hover:text-white transition-colors text-sm font-medium flex items-center justify-center gap-2">
-                    <i data-feather="arrow-left" class="w-4 h-4"></i>
-                    Back to Homepage
-                </a>
-            </div>
         </div>
+
     </div>
 
     <script>
         feather.replace();
-
-        // Add some interactive effects
-        document.addEventListener('DOMContentLoaded', function() {
-            const inputs = document.querySelectorAll('input');
-
-            inputs.forEach(input => {
-                // Add focus effects
-                input.addEventListener('focus', function() {
-                    this.parentElement.classList.add('ring-2', 'ring-bento-accent/20');
-                });
-
-                input.addEventListener('blur', function() {
-                    this.parentElement.classList.remove('ring-2', 'ring-bento-accent/20');
-                });
-
-                // Add validation styling
-                input.addEventListener('input', function() {
-                    if (this.value.trim() !== '') {
-                        this.classList.add('border-bento-accent/50');
-                    } else {
-                        this.classList.remove('border-bento-accent/50');
-                    }
-                });
-            });
-
-            // Add hover effect to login card
-            const loginCard = document.querySelector('.hover-lift');
-            if (loginCard) {
-                loginCard.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-5px)';
-                });
-
-                loginCard.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                });
-            }
-        });
     </script>
 </body>
 

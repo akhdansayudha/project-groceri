@@ -9,6 +9,9 @@ use App\Models\Invoice;
 use Illuminate\Support\Str;
 use App\Models\TokenPrice;
 use App\Models\Tier;
+// Midtrans SDK
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class WalletController extends Controller
 {
@@ -48,35 +51,75 @@ class WalletController extends Controller
 
         $amount = $request->token_amount;
 
-        // 1. Cari Harga per Token berdasarkan range
+        // 1. Logika Harga (Sama seperti sebelumnya)
         $pricing = TokenPrice::where('min_qty', '<=', $amount)
             ->where('max_qty', '>=', $amount)
             ->first();
 
-        // Fallback jika jumlah melebihi range tertinggi di DB (Pakai harga termurah/terakhir)
         if (!$pricing) {
             $pricing = TokenPrice::orderBy('max_qty', 'desc')->first();
         }
 
         $pricePerToken = $pricing->price_per_token;
-        $totalBill = $amount * $pricePerToken;
+        $totalBill = (int) ($amount * $pricePerToken); // Pastikan Integer
 
-        /** @var \App\Models\User $user */
         $user = Auth::user();
+        $invoiceNumber = 'INV-' . date('Ymd') . '-' . strtoupper(Str::random(5));
 
-        // 2. Buat Invoice
+        // 2. Buat Invoice Database
         $invoice = Invoice::create([
             'user_id' => $user->id,
-            'invoice_number' => 'INV-' . date('Ymd') . '-' . strtoupper(Str::random(5)),
-            'amount' => $totalBill, // Total Rupiah
+            'invoice_number' => $invoiceNumber,
+            'amount' => $totalBill,
             'status' => 'unpaid',
-            // Simpan info jumlah token di deskripsi agar mudah diparsing saat pembayaran sukses
-            'description' => "Top Up {$amount} Toratix (Rate: Rp " . number_format($pricePerToken) . "/tx)",
-            'payment_method' => 'manual_transfer',
+            'description' => "Top Up {$amount} Toratix",
+            'payment_method' => 'midtrans', // Ubah jadi midtrans
             'due_date' => now()->addDay(),
         ]);
 
+        // 3. Konfigurasi Midtrans
+        Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
+
+        // --- DEBUG 1: CEK APAKAH SERVER KEY TERBACA ---
+        // Jika layar menampilkan NULL, berarti masalah ada di .env / cache
+        if (empty(Config::$serverKey)) {
+            dd("SERVER KEY TIDAK TERBACA! Cek file .env Anda.");
+        }
+        // ---------------------------------------------
+
+        // 4. Buat Parameter Transaksi Midtrans
+        $params = [
+            'transaction_details' => [
+                'order_id' => $invoiceNumber, // Gunakan No Invoice
+                'gross_amount' => $totalBill,
+            ],
+            'customer_details' => [
+                'first_name' => $user->full_name,
+                'email' => $user->email,
+            ],
+            'item_details' => [
+                [
+                    'id' => 'TOKEN-' . $amount,
+                    'price' => $pricePerToken,
+                    'quantity' => $amount,
+                    'name' => "Toratix Token ({$amount} TX)"
+                ]
+            ]
+        ];
+
+        // 5. Dapatkan Snap Token & Simpan
+        try {
+            $snapToken = Snap::getSnapToken($params);
+            $invoice->update(['snap_token' => $snapToken]);
+        } catch (\Exception $e) {
+            dd("ERROR MIDTRANS: " . $e->getMessage());
+            return back()->with('error', 'Gagal menghubungkan ke payment gateway: ' . $e->getMessage());
+        }
+
         return redirect()->route('client.invoices.show', $invoice->id)
-            ->with('success', 'Tagihan dibuat! Silakan lakukan pembayaran.');
+            ->with('success', 'Invoice created. Please complete payment.');
     }
 }

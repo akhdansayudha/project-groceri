@@ -199,7 +199,7 @@
                     <p class="text-[10px] text-gray-500 truncate uppercase tracking-wider">Super Admin</p>
                 </div>
             </div>
-            <form action="{{ route('logout') }}" method="POST">
+            <form action="{{ route('admin.logout') }}" method="POST">
                 @csrf
                 <button type="submit"
                     class="p-2 rounded-lg text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"

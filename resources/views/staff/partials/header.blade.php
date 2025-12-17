@@ -14,8 +14,17 @@
     class="sticky top-0 z-40 w-full px-8 py-4 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 transition-all duration-300">
     <div class="flex items-center justify-between">
 
-        {{-- LEFT: DATE --}}
+        {{-- LEFT: TOGGLE & DATE --}}
         <div class="flex items-center gap-4">
+
+            {{-- TOMBOL BURGER MENU (BARU) --}}
+            <button id="sidebar-toggle"
+                class="p-2 -ml-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-black transition-colors focus:outline-none">
+                <i data-feather="menu" class="w-5 h-5"></i>
+            </button>
+
+            <div class="h-6 w-[1px] bg-gray-200 hidden lg:block"></div>
+
             <span class="hidden lg:block text-xs font-medium text-gray-400">
                 {{ now()->format('l, d M Y') }}
             </span>
@@ -43,7 +52,7 @@
                     </span>
                 </div>
 
-                {{-- 2. TOKEN BALANCE (Black Card Design - Client Style) --}}
+                {{-- 2. TOKEN BALANCE --}}
                 <a href="{{ route('staff.finance.earnings') }}"
                     class="group flex items-center gap-3 px-4 py-1.5 bg-[#0a0a0a] text-white rounded-full border border-gray-800 shadow-lg shadow-gray-200/50 hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer">
 
@@ -76,14 +85,12 @@
                 </div>
 
                 <div class="relative">
-                    {{-- Ring Avatar Staff (Ungu) --}}
                     <div class="w-10 h-10 rounded-full p-[2px] bg-gradient-to-br from-purple-100 to-purple-300">
                         <div class="w-full h-full rounded-full overflow-hidden bg-white border border-white">
                             <img src="{{ $user->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($user->full_name) . '&background=random' }}"
                                 class="w-full h-full object-cover">
                         </div>
                     </div>
-                    {{-- Online Dot --}}
                     <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full">
                     </div>
                 </div>

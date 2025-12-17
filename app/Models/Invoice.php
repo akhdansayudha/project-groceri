@@ -19,7 +19,8 @@ class Invoice extends Model
         'payment_method',
         'paid_at',
         'due_date',
-        'payment_link'
+        'payment_link',
+        'snap_token',
     ];
 
     protected $casts = [

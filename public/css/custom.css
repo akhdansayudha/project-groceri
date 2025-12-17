@@ -1,12 +1,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap');
 
+/* --- LENIS SMOOTH SCROLL SETUP --- */
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+
+.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+    /* Matikan scroll bawaan agar Lenis bekerja */
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+    overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+    pointer-events: none;
+}
+
 /* --- BASE --- */
 html {
-    scroll-behavior: smooth; /* Membuat efek scroll halus saat klik link anchor */
+    scroll-behavior: smooth;
+    /* Membuat efek scroll halus saat klik link anchor */
 }
 
 * {
-    cursor: none !important; 
+    cursor: none !important;
 }
 
 body {
@@ -17,10 +41,11 @@ body {
     position: relative;
 }
 
-/* --- STABLE DOT CURSOR --- */
+/* --- SMOOTH LAGGING CURSOR --- */
 .cursor-dot {
-    width: 15px;
-    height: 15px;
+    width: 12px;
+    /* Sedikit diperbesar */
+    height: 12px;
     background-color: #000;
     border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 50%;
@@ -29,16 +54,24 @@ body {
     left: 0;
     pointer-events: none;
     z-index: 100000;
+    /* LOGIC UPDATE: */
+    /* Menggunakan transition pada top/left membuat efek 'tertinggal' (lag) yang smooth */
+    transition: top 0.15s cubic-bezier(0.23, 1, 0.32, 1),
+        left 0.15s cubic-bezier(0.23, 1, 0.32, 1),
+        transform 0.3s ease;
     transform: translate(-50%, -50%);
-    transition: transform 0.1s linear; /* Ubah ke linear agar lebih responsif saat scroll check */
     mix-blend-mode: normal;
+    /* Bisa diganti 'difference' untuk efek keren */
 }
 
 body.hovering .cursor-dot {
-    transform: translate(-50%, -50%) scale(2.5);
-    background-color: rgba(0, 0, 0, 0.1);
+    transform: translate(-50%, -50%) scale(1.5);
+    /* Scale lebih besar */
+    background-color: rgba(0, 0, 0, 0.05);
+    /* Lebih transparan */
     border-color: #000;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(0px);
+    /* Hapus blur agar performa lebih ringan saat hover */
 }
 
 body.on-dark .cursor-dot {
@@ -51,8 +84,17 @@ body.on-dark .cursor-dot {
     transition: all 0.3s ease;
     cursor: none;
 }
-.btn-black { background-color: #000; color: #fff; border: 1px solid #000; }
-.btn-black:hover { background-color: #fff; color: #000; }
+
+.btn-black {
+    background-color: #000;
+    color: #fff;
+    border: 1px solid #000;
+}
+
+.btn-black:hover {
+    background-color: #fff;
+    color: #000;
+}
 
 /* --- MARQUEE --- */
 .marquee-container {
@@ -67,12 +109,22 @@ body.on-dark .cursor-dot {
     border-top: 1px solid #f3f4f6;
     z-index: 20;
 }
+
 .marquee-content {
     display: inline-block;
     animation: marquee 25s linear infinite;
     will-change: transform;
 }
-@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
 
 /* --- NAVBAR MENU --- */
 .group:hover .mega-menu {
@@ -80,20 +132,58 @@ body.on-dark .cursor-dot {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+
 .mega-menu {
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     transform: translateX(-50%) translateY(10px);
 }
 
-/* --- SCROLL REVEAL --- */
+/* --- SCROLL REVEAL ANIMATIONS (VARIAN BARU) --- */
+/* Base Class */
 .reveal {
     opacity: 0;
-    transform: translateY(40px);
-    transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+    transition: all 2.5s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Easing "Apple Style" */
 }
+
+/* Varian 1: Naik dari bawah (Default) */
+.reveal {
+    transform: translateY(60px);
+}
+
 .reveal.active {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* Varian 2: Zoom Out (Untuk Gambar) */
+/* Tambahkan class ini di HTML: class="reveal reveal-zoom" */
+.reveal.reveal-zoom {
+    transform: scale(0.95) translateY(40px);
+}
+
+.reveal.reveal-zoom.active {
+    transform: scale(1) translateY(0);
+}
+
+/* Varian 3: Slide dari Kiri (Untuk Text Kiri) */
+/* Tambahkan class ini di HTML: class="reveal reveal-left" */
+.reveal.reveal-left {
+    transform: translateX(-50px);
+}
+
+.reveal.reveal-left.active {
+    transform: translateX(0);
+}
+
+/* Varian 4: Slide dari Kanan (Untuk Text Kanan) */
+/* Tambahkan class ini di HTML: class="reveal reveal-right" */
+.reveal.reveal-right {
+    transform: translateX(50px);
+}
+
+.reveal.reveal-right.active {
+    transform: translateX(0);
 }
 
 /* --- TESTIMONIAL SLIDER CSS --- */
@@ -101,13 +191,21 @@ body.on-dark .cursor-dot {
     display: flex;
     transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
 }
+
 .testimonial-item {
     min-width: 100%;
     flex-shrink: 0;
 }
+
 /* Hide scrollbar for slider container */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
 
 /* Untuk Microsoft Edge */
 input[type="password"]::-ms-reveal,

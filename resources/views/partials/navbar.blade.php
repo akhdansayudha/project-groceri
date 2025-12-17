@@ -6,7 +6,7 @@
         </a>
 
         <div class="hidden md:flex space-x-16 items-center">
-            <a href="#" class="text-sm font-medium hover:text-gray-500 transition-colors hover-target">Home</a>
+            <a href="{{ route('home') }}" class="text-sm font-medium hover:text-gray-500 transition-colors hover-target">Home</a>
             <a href="#who-we-are" class="text-sm font-medium hover:text-gray-500 transition-colors hover-target">About</a>
             
             <div class="group static"> 

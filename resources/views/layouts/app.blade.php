@@ -22,5 +22,6 @@
     <script src="{{ asset('js/interactions.js') }}"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <script>feather.replace();</script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
 </body>
 </html>

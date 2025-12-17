@@ -16,13 +16,11 @@ class User extends Authenticatable
     protected $keyType = 'string';
 
     protected $fillable = [
-        'name',      // Mapping ke 'full_name' perlu diperhatikan
-        'full_name', // Sesuaikan dengan nama kolom di DB Anda
+        'full_name',
         'email',
         'password',
         'avatar_url',
         'role',
-        'avatar_url',
         'bank_name',
         'bank_account',
         'bank_holder',

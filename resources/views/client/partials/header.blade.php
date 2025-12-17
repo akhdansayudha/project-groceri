@@ -8,7 +8,7 @@
         'bg' => 'bg-gray-50',
         'border' => 'border-gray-200',
         'text' => 'text-gray-600',
-        'icon' => 'shield', // Icon Feather
+        'icon' => 'shield',
         'effect' => '',
     ];
 
@@ -26,7 +26,7 @@
             'bg' => 'bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50',
             'border' => 'border-amber-200',
             'text' => 'text-amber-700',
-            'icon' => 'award', // Nanti kita ganti jadi Crown logic jika perlu
+            'icon' => 'award',
             'effect' => 'shadow-md shadow-amber-500/20 ring-1 ring-amber-100',
         ];
     }
@@ -37,8 +37,15 @@
     <div class="flex items-center justify-between">
 
         <div class="flex items-center gap-4">
-            {{-- Bisa diisi breadcrumb navigation di masa depan --}}
-            <div class="hidden lg:block h-6 w-[1px] bg-gray-200"></div>
+
+            {{-- TOMBOL BURGER MENU (BARU) --}}
+            <button id="sidebar-toggle"
+                class="p-2 -ml-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-black transition-colors focus:outline-none">
+                <i data-feather="menu" class="w-5 h-5"></i>
+            </button>
+
+            <div class="h-6 w-[1px] bg-gray-200"></div>
+
             <span class="hidden lg:block text-xs font-medium text-gray-400">
                 {{ now()->format('l, d M Y') }}
             </span>
@@ -52,19 +59,15 @@
                 <div
                     class="flex items-center gap-2 px-3 py-1.5 rounded-full border {{ $badgeTheme['bg'] }} {{ $badgeTheme['border'] }} {{ $badgeTheme['text'] }} {{ $badgeTheme['effect'] }} transition-all select-none">
 
-                    {{-- Icon Logic --}}
                     @if (stripos($tierName, 'Ultimate') !== false)
-                        {{-- Icon Mahkota untuk Ultimate --}}
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                             stroke-linejoin="round" class="lucide lucide-crown">
                             <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
                         </svg>
                     @elseif(stripos($tierName, 'Professional') !== false)
-                        {{-- Icon Bintang untuk Pro --}}
                         <i data-feather="star" class="w-3.5 h-3.5 fill-indigo-100"></i>
                     @else
-                        {{-- Icon Shield untuk Starter --}}
                         <i data-feather="shield" class="w-3.5 h-3.5"></i>
                     @endif
 
@@ -73,7 +76,7 @@
                     </span>
                 </div>
 
-                {{-- TOKEN BALANCE (Black Card Design) --}}
+                {{-- TOKEN BALANCE --}}
                 <a href="{{ route('client.wallet.index') }}"
                     class="group flex items-center gap-3 px-4 py-1.5 bg-[#0a0a0a] text-white rounded-full border border-gray-800 shadow-lg shadow-gray-200/50 hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer">
 

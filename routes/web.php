@@ -14,6 +14,7 @@ use App\Http\Controllers\Client\WalletController;
 use App\Http\Controllers\Client\InvoiceController;
 use App\Http\Controllers\Client\SettingController;
 use App\Http\Controllers\Client\SupportController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 
 // Admin Controllers
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
@@ -46,6 +47,12 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
     Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+
+    // FORGOT PASSWORD ROUTES
+    Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

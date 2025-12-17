@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // --- 2. TAMBAHKAN KODE INI ---
+        // Jika request datang dari Ngrok (atau proxy HTTPS lainnya), paksa generate URL HTTPS
+        if (request()->header('x-forwarded-proto') === 'https') {
+            URL::forceScheme('https');
+        }
+        
         // --- 1. EVENT SAAT USER LOGIN ---
         Event::listen(Login::class, function ($event) {
             if ($event->user) {

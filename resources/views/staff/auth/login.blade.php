@@ -4,363 +4,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Login | Vektora Creative Agency</title>
+    <title>Staff Portal - Vektora Agency</title>
 
+    {{-- CDN Tailwind & Alpine --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+                        sans: ['Manrope', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
                     },
                     colors: {
-                        // Menggunakan Skema Warna Minimalis untuk Staff
-                        bento: {
-                            dark: '#0a0a0a',
-                            card: '#111111',
-                            // Accent warna hitam atau abu-abu gelap
-                            accent: '#1f2937', // Dark Gray / Slate
-                            'accent-light': '#374151', // Lighter Slate
-                            'white-primary': '#ffffff',
-                            'white-secondary': '#e5e7eb',
+                        luxury: {
+                            black: '#050505',
+                            card: '#0F0F0F',
+                            border: '#1F1F1F',
+                            input: '#141414',
+                            white: '#FFFFFF',
+                            muted: '#666666',
+                            accent: '#3B82F6' // Biru untuk nuansa produktivitas Staff
                         }
                     },
-                    borderRadius: {
-                        'bento': '1.5rem',
-                        'bento-sm': '1rem',
-                        'bento-lg': '2rem',
+                    animation: {
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': {
+                                opacity: '0',
+                                transform: 'translateY(10px)'
+                            },
+                            '100%': {
+                                opacity: '1',
+                                transform: 'translateY(0)'
+                            },
+                        },
+                        float: {
+                            '0%, 100%': {
+                                transform: 'translateY(0)'
+                            },
+                            '50%': {
+                                transform: 'translateY(-10px)'
+                            },
+                        }
                     }
                 }
             }
         }
     </script>
-
     <script src="https://unpkg.com/feather-icons"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        /* Utility Styles dari Admin Login */
-        * {
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: #fff;
         }
 
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+        /* Noise Texture */
+        .noise-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
-        .slide-in-left {
-            animation: slideInLeft 0.7s ease-out;
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .slide-in-right {
-            animation: slideInRight 0.7s ease-out 0.2s both;
-        }
-
-        /* Custom Bento Grid Background (Grid berwarna putih tipis) */
-        .bento-grid {
-            background-image:
-                linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-
-        /* Pulse menggunakan warna White-Primary */
-        .pulse-accent {
-            animation: pulse 2s infinite;
-        }
-
-        /* Hover Lift menggunakan warna Black/Dark */
-        .hover-lift {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .hover-lift:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideInLeft {
-            from {
-                transform: translateX(-30px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(30px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* Mengubah Pulse ke tema gelap/putih */
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1);
-            }
-
-            70% {
-                box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-            }
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 1024px) {
-            .split-layout {
-                flex-direction: column;
-            }
-
-            .left-panel {
-                padding: 3rem 1.5rem !important;
-            }
-
-            .right-panel {
-                padding: 2rem 1.5rem !important;
-            }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #141414 inset !important;
+            -webkit-text-fill-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
         }
     </style>
 </head>
 
-<body class="bg-bento-dark text-gray-300 font-sans antialiased min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
 
-    <div class="w-full max-w-6xl bg-bento-card rounded-bento-lg overflow-hidden shadow-2xl flex split-layout fade-in">
+    <div class="noise-bg"></div>
 
-        {{-- Left Panel: Staff Showcase & Mission --}}
+    {{-- Background Glow Effects (Cool Blue for Staff) --}}
+    <div
+        class="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-900 rounded-full blur-[180px] opacity-[0.1]">
+    </div>
+    <div
+        class="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-indigo-900 rounded-full blur-[150px] opacity-[0.1]">
+    </div>
+
+    {{-- MAIN CONTAINER (BENTO LAYOUT) --}}
+    <div
+        class="w-full max-w-[1200px] min-h-[600px] grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 animate-fade-in">
+
+        {{-- LEFT PANEL: MOTIVATION & STATS --}}
+        @php
+            // Mengambil Data Global Tim untuk Motivasi
+            try {
+                // Hitung task yang selesai bulan ini
+                $completedThisMonth = \App\Models\Task::where('status', 'completed')
+                    ->whereMonth('updated_at', now()->month)
+                    ->count();
+
+                // Total Staff Aktif
+                $totalStaff = \App\Models\User::where('role', 'staff')->count();
+            } catch (\Exception $e) {
+                $completedThisMonth = 0;
+                $totalStaff = 0;
+            }
+        @endphp
+
         <div
-            class="w-1/2 bg-gradient-to-br from-bento-dark to-gray-900 p-12 flex flex-col justify-between relative overflow-hidden left-panel slide-in-left">
-            {{-- Bento Grid Background --}}
-            <div class="absolute inset-0 bento-grid opacity-20"></div>
+            class="lg:col-span-7 glass-panel rounded-[2.5rem] p-10 flex flex-col justify-between relative overflow-hidden group">
 
-            {{-- Decorative Elements --}}
-            <div
-                class="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-gradient-to-br from-bento-white-primary to-transparent opacity-10">
-            </div>
-            <div
-                class="absolute bottom-10 left-10 w-32 h-32 rounded-bento bg-gradient-to-tr from-bento-white-primary to-transparent opacity-5">
-            </div>
-
-            {{-- Content --}}
+            {{-- Header Visual --}}
             <div class="relative z-10">
                 <div class="flex items-center gap-3 mb-8">
                     <div
-                        class="w-12 h-12 bg-bento-white-primary text-black rounded-bento-sm flex items-center justify-center shadow-lg">
-                        <i data-feather="users" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-bold text-white">Vektora</h1>
-                        <p class="text-xs text-gray-500">Staff Portal</p>
-                    </div>
+                        class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-black font-bold text-xl tracking-tighter">
+                        V.</div>
+                    <span class="text-sm font-mono tracking-widest text-gray-400 uppercase">Production Hub</span>
                 </div>
 
-                <h2 class="text-3xl font-bold text-white mb-6 leading-tight">
-                    Your hub for <span class="text-bento-white-secondary">Production</span><br>
-                    and <span class="text-bento-white-secondary">Innovation</span>
-                </h2>
-
-                <p class="text-gray-400 mb-8 max-w-md">
-                    Access your assigned tasks, monitor client chats, track your performance, and deliver excellence.
-                    Your work defines Vektora.
+                <h1 class="text-4xl md:text-6xl font-bold tracking-tighter leading-[1.1] mb-6">
+                    Crafting <br> <span class="text-blue-500">The Future.</span>
+                </h1>
+                <p class="text-gray-400 max-w-md font-light leading-relaxed">
+                    Collaborate, create, and deliver exceptional work. Access your workspace and track your performance
+                    here.
                 </p>
-
-                {{-- Bento Stats (Akan diisi dengan Live Data Staff Nanti) --}}
-                <div class="grid grid-cols-3 gap-4 mb-10">
-                    <div class="bg-black/40 backdrop-blur-sm rounded-bento-sm p-4 text-center border border-gray-800">
-                        <div class="text-2xl font-bold text-white">4</div>
-                        <div class="text-xs text-gray-500">Active Tasks</div>
-                    </div>
-                    <div class="bg-black/40 backdrop-blur-sm rounded-bento-sm p-4 text-center border border-gray-800">
-                        <div class="text-2xl font-bold text-white">85</div>
-                        <div class="text-xs text-gray-500">Toratix Earned</div>
-                    </div>
-                    <div class="bg-black/40 backdrop-blur-sm rounded-bento-sm p-4 text-center border border-gray-800">
-                        <div class="text-2xl font-bold text-white">4.8</div>
-                        <div class="text-xs text-gray-500">Rating</div>
-                    </div>
-                </div>
             </div>
 
-            {{-- Footer Note --}}
-            <div class="relative z-10">
-                <div class="flex items-center gap-3 text-gray-500 text-sm">
-                    <i data-feather="target" class="w-4 h-4"></i>
-                    <span>Focus on completion, we handle the administration.</span>
+            {{-- Bento Grid Stats (Global Team Stats) --}}
+            <div class="grid grid-cols-2 gap-4 mt-12 relative z-10">
+
+                {{-- Card 1: Team Velocity --}}
+                <div
+                    class="bg-[#0A0A0A] p-6 rounded-3xl border border-white/5 hover:border-blue-500/30 transition-all duration-500 group/card">
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="p-2 bg-blue-500/10 text-blue-400 rounded-full group-hover/card:bg-blue-500 group-hover/card:text-white transition-all">
+                            <i data-feather="zap" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-1">{{ $completedThisMonth }}</div>
+                    <div class="text-xs text-gray-500 font-medium">Tasks Shipped This Month</div>
                 </div>
+
+                {{-- Card 2: Team Members --}}
+                <div
+                    class="bg-[#0A0A0A] p-6 rounded-3xl border border-white/5 hover:border-white/20 transition-all duration-500 group/card">
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="p-2 bg-white/5 rounded-full text-gray-400 group-hover/card:text-white transition-colors">
+                            <i data-feather="users" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-1">{{ $totalStaff }}</div>
+                    <div class="text-xs text-gray-500 font-medium">Active Creators</div>
+                </div>
+
             </div>
         </div>
 
-        {{-- Right Panel: Login Form --}}
-        <div class="w-1/2 p-12 flex flex-col justify-center right-panel slide-in-right">
-            {{-- Login Header --}}
-            <div class="text-center mb-10">
-                <h1 class="text-2xl font-bold text-white mb-2">Staff Access</h1>
-                <p class="text-gray-500">Sign in with your team credentials</p>
+        {{-- RIGHT PANEL: LOGIN FORM --}}
+        <div
+            class="lg:col-span-5 bg-luxury-card rounded-[2.5rem] p-10 border border-luxury-border flex flex-col justify-center relative shadow-2xl">
+
+            <div class="absolute top-8 right-8">
+                <a href="{{ route('home') }}"
+                    class="text-xs font-bold text-gray-500 hover:text-white flex items-center gap-2 transition-colors">
+                    Back to Home <i data-feather="arrow-right" class="w-3 h-3"></i>
+                </a>
             </div>
 
-            {{-- Error Message --}}
+            <div class="mb-10 mt-6">
+                <h2 class="text-2xl font-bold text-white mb-2">Staff Login</h2>
+                <p class="text-gray-500 text-sm">Enter your credentials to access the workspace.</p>
+            </div>
+
+            {{-- Error Alerts --}}
             @if ($errors->any())
-                <div
-                    class="bg-red-900/20 border border-red-900/50 text-red-400 px-5 py-4 rounded-bento-sm mb-6 text-sm font-medium flex items-center gap-3">
-                    <i data-feather="alert-circle" class="w-5 h-5"></i>
-                    <span>{{ $errors->first() }}</span>
+                <div class="mb-6 p-4 rounded-2xl bg-red-900/10 border border-red-900/30 flex items-start gap-3">
+                    <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mt-0.5"></i>
+                    <div class="text-sm text-red-400 font-medium">
+                        {{ $errors->first() }}
+                    </div>
                 </div>
             @endif
 
-            {{-- Login Card --}}
-            <div class="bg-bento-dark border border-gray-800 rounded-bento p-8 hover-lift">
-                <form action="{{ route('staff.login.post') }}" method="POST" class="space-y-6">
-                    @csrf
+            <form action="{{ route('staff.login.post') }}" method="POST" class="space-y-5">
+                @csrf
 
-                    {{-- Email Field --}}
-                    <div>
-                        <label for="email"
-                            class="block text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
-                            <i data-feather="user" class="w-4 h-4"></i>
-                            Email Address
-                        </label>
-                        <div class="relative">
-                            <input type="email" name="email" id="email" required autofocus
-                                class="w-full bg-black/50 border border-gray-800 text-white rounded-bento-sm px-5 py-4 pl-12 focus:outline-none focus:border-bento-white-primary focus:ring-2 focus:ring-bento-white-primary/30 transition-all placeholder-gray-600"
-                                placeholder="staff@vektora.id">
-                            <i data-feather="mail"
-                                class="w-5 h-5 text-gray-600 absolute left-5 top-1/2 -translate-y-1/2"></i>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase tracking-widest text-gray-500 ml-1">Email</label>
+                    <div class="relative group">
+                        <input type="email" name="email" required autofocus
+                            class="w-full bg-luxury-input border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-gray-700 outline-none focus:border-blue-500/50 focus:bg-luxury-input/80 transition-all duration-300 font-medium"
+                            placeholder="staff@vektora.id">
+                        <div
+                            class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-white transition-colors">
+                            <i data-feather="mail" class="w-4 h-4"></i>
                         </div>
                     </div>
+                </div>
 
-                    {{-- Password Field --}}
-                    <div>
-                        <label for="password"
-                            class="block text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
-                            <i data-feather="key" class="w-4 h-4"></i>
-                            Password
-                        </label>
-                        <div class="relative">
-                            <input type="password" name="password" id="password" required
-                                class="w-full bg-black/50 border border-gray-800 text-white rounded-bento-sm px-5 py-4 pl-12 focus:outline-none focus:border-bento-white-primary focus:ring-2 focus:ring-bento-white-primary/30 transition-all placeholder-gray-600"
-                                placeholder="••••••••">
-                            <i data-feather="lock"
-                                class="w-5 h-5 text-gray-600 absolute left-5 top-1/2 -translate-y-1/2"></i>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase tracking-widest text-gray-500 ml-1">Password</label>
+                    <div class="relative group">
+                        <input type="password" name="password" required
+                            class="w-full bg-luxury-input border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-gray-700 outline-none focus:border-blue-500/50 focus:bg-luxury-input/80 transition-all duration-300 font-medium tracking-widest"
+                            placeholder="••••••••">
+                        <div
+                            class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-white transition-colors">
+                            <i data-feather="lock" class="w-4 h-4"></i>
                         </div>
                     </div>
+                </div>
 
-                    {{-- Remember Me & Forgot Password (Disertakan untuk kelengkapan) --}}
-                    <div class="flex items-center justify-between">
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <div class="relative">
-                                <input type="checkbox" name="remember" class="sr-only peer">
-                                <div
-                                    class="w-5 h-5 bg-black/50 border border-gray-700 rounded-md peer-checked:bg-bento-accent-light peer-checked:border-bento-accent-light flex items-center justify-center transition-colors">
-                                    <i data-feather="check" class="w-3 h-3 text-white hidden peer-checked:block"></i>
-                                </div>
+                {{-- Remember Me Only (Forgot Password Removed) --}}
+                <div class="flex items-center pt-2">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <div class="relative">
+                            <input type="checkbox" name="remember" class="sr-only peer">
+                            <div
+                                class="w-5 h-5 border border-white/20 rounded-md peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all">
                             </div>
-                            <span class="text-sm text-gray-400">Remember me</span>
-                        </label>
-
-                        <a href="#"
-                            class="text-sm text-bento-white-secondary hover:text-white transition-colors font-medium">
-                            Forgot password?
-                        </a>
-                    </div>
-
-                    {{-- Submit Button --}}
-                    <button type="submit"
-                        class="w-full bg-gradient-to-r from-bento-accent to-bento-accent-light text-bento-white-primary font-bold py-4 rounded-bento-sm hover:opacity-90 transition-all shadow-lg shadow-bento-accent/20 pulse-accent flex items-center justify-center gap-3 mt-8">
-                        <i data-feather="log-in" class="w-5 h-5"></i>
-                        Access Staff Portal
-                    </button>
-                </form>
-
-                {{-- Divider --}}
-                <div class="flex items-center my-8">
-                    <div class="flex-1 h-px bg-gray-800"></div>
-                    <span class="px-4 text-sm text-gray-600">Secure Sign In</span>
-                    <div class="flex-1 h-px bg-gray-800"></div>
+                            <i data-feather="check"
+                                class="w-3 h-3 text-white absolute top-1 left-1 opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                        </div>
+                        <span class="text-sm text-gray-500 group-hover:text-gray-300 transition-colors">Keep me signed
+                            in</span>
+                    </label>
                 </div>
 
-                {{-- Social Login Options --}}
-                <div class="text-center">
-                    <p class="text-sm text-gray-500">Internal Use Only</p>
-                </div>
+                <button type="submit"
+                    class="w-full bg-white text-black font-bold text-lg py-4 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] mt-4 flex items-center justify-center gap-3">
+                    <span>Access Workspace</span>
+                    <i data-feather="arrow-right" class="w-5 h-5"></i>
+                </button>
+
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-white/5 text-center">
+                <p class="text-[10px] text-gray-600 font-mono uppercase tracking-widest">
+                    Authorized Personnel Only
+                </p>
             </div>
 
-            {{-- Back to Home Link --}}
-            <div class="text-center mt-10">
-                <a href="{{ route('home') }}"
-                    class="text-gray-500 hover:text-white transition-colors text-sm font-medium flex items-center justify-center gap-2">
-                    <i data-feather="arrow-left" class="w-4 h-4"></i>
-                    Back to Homepage
-                </a>
-            </div>
         </div>
+
     </div>
 
     <script>
         feather.replace();
-
-        // Add some interactive effects
-        document.addEventListener('DOMContentLoaded', function() {
-            const inputs = document.querySelectorAll('input');
-
-            inputs.forEach(input => {
-                // Add focus effects
-                input.addEventListener('focus', function() {
-                    this.parentElement.classList.add('ring-2', 'ring-bento-white-primary/20');
-                });
-
-                input.addEventListener('blur', function() {
-                    this.parentElement.classList.remove('ring-2', 'ring-bento-white-primary/20');
-                });
-
-                // Add validation styling
-                input.addEventListener('input', function() {
-                    if (this.value.trim() !== '') {
-                        this.classList.add('border-bento-white-primary/50');
-                    } else {
-                        this.classList.remove('border-bento-white-primary/50');
-                    }
-                });
-            });
-
-            // Add hover effect to login card
-            const loginCard = document.querySelector('.hover-lift');
-            if (loginCard) {
-                loginCard.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-5px)';
-                });
-
-                loginCard.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                });
-            }
-        });
     </script>
 </body>
 

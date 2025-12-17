@@ -20,12 +20,19 @@
         }
     </script>
 
-    {{-- 2. ALPINE JS (INI YANG SEBELUMNYA HILANG) --}}
-    {{-- Wajib ada agar x-data, @click, x-show, x-model berfungsi --}}
+    {{-- 2. ALPINE JS --}}
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
     {{-- 3. FEATHER ICONS --}}
     <script src="https://unpkg.com/feather-icons"></script>
+
+    {{-- 4. SCRIPT ANTI-KILAT SIDEBAR (WAJIB DI HEAD) --}}
+    <script>
+        // Cek LocalStorage SEBELUM halaman dirender
+        if (localStorage.getItem('staffSidebarState') === 'closed') {
+            document.documentElement.classList.add('sidebar-closed');
+        }
+    </script>
 
     <style>
         .custom-scrollbar::-webkit-scrollbar {
@@ -46,9 +53,6 @@
             animation: fadeIn 0.4s ease-in-out;
         }
 
-        /* Tambahkan style ini untuk mencegah "fouc" (flash of unstyled content)
-           Element dengan x-cloak akan disembunyikan sampai Alpine selesai loading
-        */
         [x-cloak] {
             display: none !important;
         }
@@ -64,23 +68,44 @@
                 transform: translateY(0);
             }
         }
+
+        /* --- LOGIKA CSS SIDEBAR (Mencegah FOUC) --- */
+        /* Jika class 'sidebar-closed' ada di HTML, paksa lebar jadi 0 */
+        html.sidebar-closed #sidebar-wrapper {
+            width: 0 !important;
+            border-right: none !important;
+        }
+
+        /* Mencegah animasi transisi saat halaman baru dimuat */
+        .preload * {
+            transition: none !important;
+        }
     </style>
 </head>
 
-<body class="bg-gray-100 font-sans antialiased text-gray-900">
-    <div class="flex min-h-screen">
+{{-- Tambahkan class 'preload' agar tidak ada animasi geser saat refresh --}}
 
-        {{-- SIDEBAR --}}
-        @include('staff.partials.sidebar')
+<body class="bg-gray-100 font-sans antialiased text-gray-900 preload">
+    <div class="flex h-screen overflow-hidden">
+
+        {{-- SIDEBAR WRAPPER --}}
+        {{-- Default w-72, akan di-override oleh CSS di head jika closed --}}
+        <div id="sidebar-wrapper"
+            class="w-72 transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 border-r border-gray-200 bg-white">
+            <div class="w-72">
+                @include('staff.partials.sidebar')
+            </div>
+        </div>
 
         {{-- MAIN CONTENT --}}
-        <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        {{-- Gunakan flex-1 agar otomatis melebar saat sidebar menutup --}}
+        <main class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden h-full transition-all duration-300">
 
             {{-- HEADER --}}
             @include('staff.partials.header')
 
             {{-- CONTENT --}}
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-8">
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-8 fade-in">
                 @yield('content')
 
                 <footer class="mt-10 text-center text-xs text-gray-400 pb-4">
@@ -89,8 +114,35 @@
             </div>
         </main>
     </div>
+
     <script>
         feather.replace();
+
+        // --- HAPUS CLASS PRELOAD SETELAH LOAD ---
+        window.addEventListener('load', () => {
+            document.body.classList.remove('preload');
+        });
+
+        // --- LOGIC TOGGLE SIDEBAR ---
+        const toggleBtn = document.getElementById('sidebar-toggle');
+
+        function toggleSidebar() {
+            // Toggle class di tag HTML agar CSS di head bereaksi
+            document.documentElement.classList.toggle('sidebar-closed');
+
+            // Simpan state ke LocalStorage (Gunakan key berbeda 'staffSidebarState')
+            if (document.documentElement.classList.contains('sidebar-closed')) {
+                localStorage.setItem('staffSidebarState', 'closed');
+            } else {
+                localStorage.setItem('staffSidebarState', 'open');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleSidebar);
+            }
+        });
     </script>
 </body>
 

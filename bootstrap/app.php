@@ -3,18 +3,25 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Support\Facades\Auth; // <--- JANGAN LUPA IMPORT INI
-use Illuminate\Http\Request;         // <--- DAN INI
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        commands: __DIR__.'/../routes/console.php',
+        web: __DIR__ . '/../routes/web.php',
+        api: __DIR__ . '/../routes/api.php', // Pastikan baris ini ada agar routes/api.php terbaca
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        
-        // --- TAMBAHKAN BAGIAN INI UNTUK MENGATUR REDIRECT USER ---
+
+        // 1. Disable CSRF untuk Webhook Midtrans
+        // Ini penting agar Midtrans bisa mengirim notifikasi ke server Anda
+        $middleware->validateCsrfTokens(except: [
+            'api/midtrans/callback',
+        ]);
+
+        // 2. Logic Redirect User (Kode Anda sebelumnya)
         $middleware->redirectUsersTo(function (Request $request) {
             // Cek user yang sedang login
             $user = Auth::user();
@@ -30,8 +37,6 @@ return Application::configure(basePath: dirname(__DIR__))
                     return route('client.dashboard');
             }
         });
-        // ---------------------------------------------------------
-
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

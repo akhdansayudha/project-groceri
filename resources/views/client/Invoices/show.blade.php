@@ -1,6 +1,10 @@
 @extends('client.layouts.app')
 
 @section('content')
+    {{-- Midtrans Snap JS --}}
+    {{-- Pastikan CLIENT KEY sudah ada di .env Anda --}}
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
+
     <div class="max-w-3xl mx-auto fade-in">
 
         <div class="mb-6">
@@ -60,6 +64,7 @@
                             $statusColors = match ($invoice->status) {
                                 'paid' => 'bg-green-100 text-green-700',
                                 'unpaid' => 'bg-yellow-100 text-yellow-800',
+                                'pending' => 'bg-orange-100 text-orange-800',
                                 'failed' => 'bg-red-100 text-red-700',
                                 default => 'bg-gray-100 text-gray-600',
                             };
@@ -90,24 +95,23 @@
                 </table>
             </div>
 
-            @if ($invoice->status == 'unpaid')
+            {{-- LOGIC TOMBOL BAYAR --}}
+            @if ($invoice->status == 'unpaid' || $invoice->status == 'pending')
                 <div class="text-center">
-                    <p class="text-sm text-gray-500 mb-4">Select payment method (Simulation)</p>
+                    <p class="text-sm text-gray-500 mb-4">Complete your payment securely via Midtrans</p>
 
-                    <form action="{{ route('client.invoices.simulate', $invoice->id) }}" method="POST">
-                        @csrf
-                        <button type="submit"
-                            class="w-full bg-black text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg shadow-black/20 flex items-center justify-center gap-2">
-                            <i data-feather="check-circle" class="w-5 h-5"></i>
-                            <span>Simulate Payment Success (Dev Mode)</span>
-                        </button>
-                    </form>
+                    <button id="pay-button"
+                        class="w-full bg-black text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg shadow-black/20 flex items-center justify-center gap-2">
+                        <i data-feather="credit-card" class="w-5 h-5"></i>
+                        <span>Pay Now</span>
+                    </button>
 
                     <p class="text-xs text-gray-400 mt-4">
-                        *In production, this button will be replaced by Midtrans/Xendit Popup.
+                        *Secure Payment Gateway by Midtrans
                     </p>
                 </div>
             @else
+                {{-- JIKA SUDAH LUNAS --}}
                 <div class="text-center border-t border-gray-100 pt-8">
                     <p class="text-sm text-gray-500 mb-2">Payment completed on
                         {{ $invoice->paid_at ? $invoice->paid_at->format('d M Y, H:i') : '-' }}</p>
@@ -120,4 +124,33 @@
 
         </div>
     </div>
+
+    {{-- SCRIPT HANDLER PAYMENT --}}
+    @if (($invoice->status == 'unpaid' || $invoice->status == 'pending') && $invoice->snap_token)
+        <script type="text/javascript">
+            var payButton = document.getElementById('pay-button');
+            payButton.addEventListener('click', function() {
+                // Trigger snap popup
+                window.snap.pay('{{ $invoice->snap_token }}', {
+                    onSuccess: function(result) {
+                        /* Payment Success */
+                        window.location.reload();
+                    },
+                    onPending: function(result) {
+                        /* Payment Pending */
+                        window.location.reload();
+                    },
+                    onError: function(result) {
+                        /* Payment Failed */
+                        alert("Pembayaran gagal!");
+                        window.location.reload();
+                    },
+                    onClose: function() {
+                        /* User Closed Popup */
+                        // Tidak melakukan apa-apa, biarkan user klik pay lagi jika mau
+                    }
+                });
+            });
+        </script>
+    @endif
 @endsection
