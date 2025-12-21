@@ -1,11 +1,11 @@
 pipeline {
-    agent any // atau 'agent { label 'linux' }' jika ada label khusus
+    agent any
 
     environment {
         DOCKER_REGISTRY = 'wahyuditrs17'
         IMAGE_NAME = 'vektora'
         AZURE_WEBAPP_NAME = 'project-vektora'
-        AZURE_RESOURCE_GROUP = 'project-vektora-group' // Ganti jika berbeda
+        AZURE_RESOURCE_GROUP = 'project-vektora-group'
         APP_URL = 'https://vektora-ffhggreufqf7dteg.southeastasia-01.azurewebsites.net'
     }
 
@@ -19,8 +19,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Gunakan sh, bukan bat
-                    sh "docker build -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID} -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest ."
+                    // PERBAIKI: Gunakan bat, bukan sh
+                    bat "docker build -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:%BUILD_ID% -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest ."
                 }
             }
         }
@@ -34,13 +34,13 @@ pipeline {
                         passwordVariable: 'DOCKER_PASSWORD'
                     )]) {
                         // Login ke Docker Hub
-                        sh "echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin"
+                        bat "echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin"
                         
                         // Push image
-                        sh "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
-                        sh "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
+                        bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:%BUILD_ID%"
+                        bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
                         
-                        echo "✅ Image berhasil di-push: ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
+                        echo "✅ Image berhasil di-push: ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:%BUILD_ID%"
                     }
                 }
             }
@@ -56,22 +56,19 @@ pipeline {
                         usernameVariable: 'AZURE_USERNAME',
                         passwordVariable: 'AZURE_PASSWORD'
                     )]) {
-                        // PERUBAHAN PENTING: ganti 'bat' dengan 'sh' dan format command
-                        sh """
-                        az login --service-principal \
-                          -u $AZURE_USERNAME \
-                          -p $AZURE_PASSWORD \
-                          --tenant common
+                        // PERBAIKI: Gunakan bat dengan format Windows
+                        bat """
+                        az login --service-principal -u %AZURE_USERNAME% -p %AZURE_PASSWORD% --tenant common
                         
-                        az webapp config container set \
-                          --name ${env.AZURE_WEBAPP_NAME} \
-                          --resource-group ${env.AZURE_RESOURCE_GROUP} \
-                          --docker-custom-image-name ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest \
+                        az webapp config container set ^
+                          --name %AZURE_WEBAPP_NAME% ^
+                          --resource-group %AZURE_RESOURCE_GROUP% ^
+                          --docker-custom-image-name %DOCKER_REGISTRY%/%IMAGE_NAME%:latest ^
                           --docker-registry-server-url https://index.docker.io
                         
-                        az webapp restart \
-                          --name ${env.AZURE_WEBAPP_NAME} \
-                          --resource-group ${env.AZURE_RESOURCE_GROUP}
+                        az webapp restart ^
+                          --name %AZURE_WEBAPP_NAME% ^
+                          --resource-group %AZURE_RESOURCE_GROUP%
                         """
                         
                         echo '⏳ Waiting for deployment to complete...'
@@ -85,13 +82,13 @@ pipeline {
             steps {
                 script {
                     echo '🏥 Checking application health...'
-                    // Ganti 'bat' dengan 'sh' untuk curl
-                    sh "curl -f --retry 3 --retry-delay 10 ${env.APP_URL} || echo 'App might still be starting...'"
+                    // Gunakan bat untuk curl di Windows
+                    bat "curl -f --retry 3 --retry-delay 10 %APP_URL% || echo 'App might still be starting...'"
                     
                     echo '========================================'
                     echo '✅ DEPLOYMENT SUCCESSFUL!'
-                    echo "🌐 Your app is live at: ${env.APP_URL}"
-                    echo "📦 Docker Image: ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
+                    echo "🌐 Your app is live at: %APP_URL%"
+                    echo "📦 Docker Image: %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID%"
                     echo '========================================'
                 }
             }
