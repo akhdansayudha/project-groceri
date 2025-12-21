@@ -8,6 +8,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 checkout scm
@@ -17,72 +18,64 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    bat "docker build -t %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID% -t %DOCKER_REGISTRY%/%IMAGE_NAME%:latest ."
+                    bat """
+                    docker build ^
+                      -t %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID% ^
+                      -t %DOCKER_REGISTRY%/%IMAGE_NAME%:latest .
+                    """
                 }
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'docker-hub-credential',
-                        usernameVariable: 'DOCKER_USERNAME',
-                        passwordVariable: 'DOCKER_PASSWORD'
-                    )]) {
-                        bat "echo %DOCKER_PASSWORD% | docker login --username %DOCKER_USERNAME% --password-stdin"
-                        bat "docker push %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID%"
-                        bat "docker push %DOCKER_REGISTRY%/%IMAGE_NAME%:latest"
-                        
-                        echo "✅ Image pushed: %DOCKER_REGISTRY%/%IMAGE_NAME%:latest"
-                    }
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-hub-credential',
+                    usernameVariable: 'DOCKER_USERNAME',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
+                    bat "echo %DOCKER_PASSWORD% | docker login --username %DOCKER_USERNAME% --password-stdin"
+                    bat "docker push %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID%"
+                    bat "docker push %DOCKER_REGISTRY%/%IMAGE_NAME%:latest"
                 }
             }
         }
 
-        stage('Verify Deployment') {
+        stage('Deploy Triggered') {
             steps {
-                script {
-                    echo '''
-                    ========================================
-                    🎉 CI/CD PIPELINE COMPLETE!
-                    
-                    ✅ Docker Image Updated:
-                       • wahyuditrs17/vektora:%BUILD_ID%
-                       • wahyuditrs17/vektora:latest
-                    
-                    🔄 Azure App Service akan otomatis:
-                       1. Pull image terbaru dari Docker Hub
-                       2. Restart container dengan image baru
-                       3. Waktu: 2-5 menit setelah push
-                    
-                    📱 Untuk mempercepat restart:
-                       1. Login ke Azure Portal
-                       2. Buka App Service: project-vektora
-                       3. Klik "Restart" (Opsional)
-                       
-                    🌐 Aplikasi Anda:
-                       %APP_URL%
-                    ========================================
-                    '''
-                    
-                    // Opsional: Health check setelah beberapa menit
-                    sleep(time: 120, unit: 'SECONDS') // Tunggu 2 menit
-                    bat "curl -f %APP_URL% || echo 'App mungkin masih restarting...'"
-                }
+                echo '''
+                ========================================
+                🚀 DEPLOYMENT TRIGGERED
+
+                Image pushed to Docker Hub:
+                - %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID%
+                - %DOCKER_REGISTRY%/%IMAGE_NAME%:latest
+
+                Azure App Service will:
+                1. Pull latest image
+                2. Restart container
+                3. Warm up application
+
+                ⏱ Expected time: 2–5 minutes
+                ========================================
+                '''
             }
         }
     }
-    
+
     post {
         success {
-            echo '🎊 Pipeline BERHASIL! Aplikasi akan otomatis update di Azure.'
-            // Opsional: Notifikasi
-            // emailext body: 'Pipeline vektora berhasil! Image terbaru: wahyuditrs17/vektora:latest', subject: '✅ Deployment Success', to: 'email@anda.com'
+            echo '✅ CI/CD pipeline SUCCESS. Deployment is now handled by Azure.'
+            echo "🌐 App URL: ${APP_URL}"
         }
+
+        failure {
+            echo '❌ CI/CD pipeline FAILED. Check Jenkins logs.'
+        }
+
         always {
-            echo 'Pipeline selesai'
             cleanWs()
+            echo 'Pipeline finished.'
         }
     }
 }
