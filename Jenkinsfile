@@ -45,7 +45,6 @@ pipeline {
                 }
             }
         }
-        stages {
         stage('Test Azure CLI Access') {
             steps {
                 script {
