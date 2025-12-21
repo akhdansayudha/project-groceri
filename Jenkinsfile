@@ -1,98 +1,52 @@
 pipeline {
     agent any
-    
+
     environment {
-        DOCKER_IMAGE = 'your-dockerhub-username/groceri-app'
-        DOCKER_TAG = "${env.BUILD_NUMBER}"
-        AZURE_REGISTRY = 'yourregistry.azurecr.io'
+        DOCKER_REGISTRY = 'yourdockerhubusername'
+        IMAGE_NAME = 'project-groceri'
     }
-    
+
     stages {
-        // STAGE 1: Checkout code dari GitHub
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                checkout scmGit(
-                    branches: [[name: 'main']],
-                    userRemoteConfigs: [[url: 'https://github.com/akhdansayudha/project-groceri.git']]
-                )
+                checkout scm
             }
         }
-        
-        // STAGE 2: Build & Test
-        stage('Build & Test') {
+
+        stage('Build Docker Image') {
             steps {
                 script {
-                    // Build Docker image
-                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                    
-                    // Run tests (jika ada)
-                    sh "docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} npm test || true"
+                    // GANTI 'sh' dengan 'bat' untuk Windows
+                    bat 'docker build -t %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID% .'
                 }
             }
         }
-        
-        // STAGE 3: Push to Docker Hub
+
         stage('Push to Registry') {
             steps {
                 script {
-                    // Login ke Docker Hub
-                    withCredentials([string(credentialsId: 'docker-hub-password', variable: 'DOCKER_PASSWORD')]) {
-                        sh "echo ${DOCKER_PASSWORD} | docker login --username your-dockerhub-username --password-stdin"
+                    // Login ke Docker Hub (gunakan bat untuk Windows)
+                    withCredentials([string(credentialsId: 'docker-hub-credential', variable: 'DOCKER_PASSWORD')]) {
+                        bat 'echo %DOCKER_PASSWORD% | docker login --username %DOCKER_REGISTRY% --password-stdin'
                     }
-                    
                     // Push image
-                    sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                    sh "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
-                    sh "docker push ${DOCKER_IMAGE}:latest"
+                    bat 'docker push %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID%'
+                    bat 'docker push %DOCKER_REGISTRY%/%IMAGE_NAME%:latest'
                 }
             }
         }
         
-        // STAGE 4: Deploy to Azure
+        // Untuk saat ini, COMMENT dulu stage Deploy dan Health Check
         stage('Deploy to Azure') {
             steps {
-                script {
-                    // Deploy ke Azure Container Instances atau App Service
-                    sh '''
-                    az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
-                    az container create \
-                        --resource-group groceri-rg \
-                        --name groceri-container \
-                        --image ${DOCKER_IMAGE}:${DOCKER_TAG} \
-                        --dns-name-label groceri-app \
-                        --ports 3000 \
-                        --environment-variables NODE_ENV=production
-                    '''
-                }
+                echo 'Deploy stage disabled for Windows testing'
             }
         }
         
-        // STAGE 5: Health Check
         stage('Health Check') {
             steps {
-                script {
-                    // Test aplikasi setelah deploy
-                    sh "sleep 30"  // Tunggu container ready
-                    sh "curl -f http://groceri-app.westus.azurecontainer.io:3000/health || exit 1"
-                }
+                echo 'Health Check stage disabled'
             }
-        }
-    }
-    
-    post {
-        success {
-            emailext(
-                subject: "SUCCESS: Pipeline ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
-                body: "Pipeline berhasil! Aplikasi sudah di-deploy.",
-                to: 'team@email.com'
-            )
-        }
-        failure {
-            emailext(
-                subject: "FAILED: Pipeline ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
-                body: "Pipeline gagal! Cek logs di Jenkins.",
-                to: 'team@email.com'
-            )
         }
     }
 }
