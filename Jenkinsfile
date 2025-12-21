@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = 'yourdockerhubusername'
+        DOCKER_REGISTRY = 'wahyuditrs17'
         IMAGE_NAME = 'project-groceri'
     }
 
@@ -16,8 +16,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // GANTI 'sh' dengan 'bat' untuk Windows
-                    bat 'docker build -t %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID% .'
+                    bat "docker build -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID} ."
                 }
             }
         }
@@ -25,18 +24,15 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
-                    // Login ke Docker Hub (gunakan bat untuk Windows)
                     withCredentials([string(credentialsId: 'docker-hub-credential', variable: 'DOCKER_PASSWORD')]) {
-                        bat 'echo %DOCKER_PASSWORD% | docker login --username %DOCKER_REGISTRY% --password-stdin'
+                        bat "echo ${DOCKER_PASSWORD} | docker login --username ${env.DOCKER_REGISTRY} --password-stdin"
                     }
-                    // Push image
-                    bat 'docker push %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID%'
-                    bat 'docker push %DOCKER_REGISTRY%/%IMAGE_NAME%:latest'
+                    bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
+                    bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
                 }
             }
         }
         
-        // Untuk saat ini, COMMENT dulu stage Deploy dan Health Check
         stage('Deploy to Azure') {
             steps {
                 echo 'Deploy stage disabled for Windows testing'
@@ -47,6 +43,13 @@ pipeline {
             steps {
                 echo 'Health Check stage disabled'
             }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline selesai - lihat logs untuk detail'
+            cleanWs()
         }
     }
 }
