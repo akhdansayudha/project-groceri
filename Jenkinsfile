@@ -56,17 +56,17 @@ pipeline {
                         usernameVariable: 'AZURE_USERNAME',
                         passwordVariable: 'AZURE_PASSWORD'
                     )]) {
-                        // PERBAIKI: Gunakan bat dengan format Windows
+                        // GUNAKAN FULL PATH ke az.exe
                         bat """
-                        az login --service-principal -u %AZURE_USERNAME% -p %AZURE_PASSWORD% --tenant common
+                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" login --service-principal -u %AZURE_USERNAME% -p %AZURE_PASSWORD% --tenant common
                         
-                        az webapp config container set ^
+                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" webapp config container set ^
                           --name %AZURE_WEBAPP_NAME% ^
                           --resource-group %AZURE_RESOURCE_GROUP% ^
                           --docker-custom-image-name %DOCKER_REGISTRY%/%IMAGE_NAME%:latest ^
                           --docker-registry-server-url https://index.docker.io
                         
-                        az webapp restart ^
+                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" webapp restart ^
                           --name %AZURE_WEBAPP_NAME% ^
                           --resource-group %AZURE_RESOURCE_GROUP%
                         """
