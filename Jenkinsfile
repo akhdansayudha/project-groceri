@@ -45,7 +45,33 @@ pipeline {
                 }
             }
         }
-        
+        stages {
+        stage('Test Azure CLI Access') {
+            steps {
+                script {
+                    echo '=== Testing Azure CLI from Jenkins ==='
+                    
+                    // Test 1: Coba dengan full path
+                    bat '''
+                    echo "Test 1: Using full path..."
+                    "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" --version
+                    '''
+                    
+                    // Test 2: Coba dengan PATH biasa
+                    bat '''
+                    echo "Test 2: Using PATH..."
+                    az --version || echo "az not found in PATH"
+                    '''
+                    
+                    // Test 3: Cek environment
+                    bat '''
+                    echo "Test 3: Checking environment..."
+                    echo User: %USERNAME%
+                    echo Path: %PATH%
+                    '''
+                }
+            }
+        }
         stage('Deploy to Azure') {
             steps {
                 script {
