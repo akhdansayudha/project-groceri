@@ -19,7 +19,6 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // PERBAIKI: Gunakan bat, bukan sh
                     bat "docker build -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:%BUILD_ID% -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest ."
                 }
             }
@@ -33,10 +32,7 @@ pipeline {
                         usernameVariable: 'DOCKER_USERNAME',
                         passwordVariable: 'DOCKER_PASSWORD'
                     )]) {
-                        // Login ke Docker Hub
                         bat "echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin"
-                        
-                        // Push image
                         bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:%BUILD_ID%"
                         bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
                         
@@ -45,45 +41,35 @@ pipeline {
                 }
             }
         }
-        stage('Test Azure CLI Access') {
-            steps {
-                script {
-                    echo '=== Testing Azure CLI from Jenkins ==='
-                    
-                    // Test 1: Coba dengan full path
-                    bat '''
-                    echo "Test 1: Using full path..."
-                    "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" --version
-                    '''
-                    
-                    // Test 2: Coba dengan PATH biasa
-                    bat '''
-                    echo "Test 2: Using PATH..."
-                    az --version || echo "az not found in PATH"
-                    '''
-                    
-                    // Test 3: Cek environment
-                    bat '''
-                    echo "Test 3: Checking environment..."
-                    echo User: %USERNAME%
-                    echo Path: %PATH%
-                    '''
-                }
-            }
-        }
+        
         stage('Deploy to Azure') {
             steps {
                 script {
                     echo '🚀 Starting deployment to Azure Web App...'
                     
-                    withCredentials([usernamePassword(
-                        credentialsId: 'azure-webapp-publish',
-                        usernameVariable: 'AZURE_USERNAME',
-                        passwordVariable: 'AZURE_PASSWORD'
-                    )]) {
-                        // GUNAKAN FULL PATH ke az.exe
+                    // GUNAKAN 3 CREDENTIAL TERPISAH
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'azure-sp-credential',  // 1. Client ID & Secret
+                            usernameVariable: 'AZURE_CLIENT_ID',
+                            passwordVariable: 'AZURE_CLIENT_SECRET'
+                        ),
+                        string(
+                            credentialsId: 'azure-tenant-id',      // 2. Tenant ID
+                            variable: 'AZURE_TENANT_ID'
+                        ),
+                        string(
+                            credentialsId: 'azure-subscription-id', // 3. Subscription ID (opsional tapi direkomendasikan)
+                            variable: 'AZURE_SUBSCRIPTION_ID'
+                        )
+                    ]) {
                         bat """
-                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" login --service-principal -u %AZURE_USERNAME% -p %AZURE_PASSWORD% --tenant common
+                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" login --service-principal ^
+                          -u %AZURE_CLIENT_ID% ^
+                          -p %AZURE_CLIENT_SECRET% ^
+                          --tenant %AZURE_TENANT_ID%
+                        
+                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" account set --subscription %AZURE_SUBSCRIPTION_ID%
                         
                         "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" webapp config container set ^
                           --name %AZURE_WEBAPP_NAME% ^
@@ -94,6 +80,8 @@ pipeline {
                         "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" webapp restart ^
                           --name %AZURE_WEBAPP_NAME% ^
                           --resource-group %AZURE_RESOURCE_GROUP%
+                        
+                        echo "✅ Deployment completed!"
                         """
                         
                         echo '⏳ Waiting for deployment to complete...'
@@ -107,7 +95,6 @@ pipeline {
             steps {
                 script {
                     echo '🏥 Checking application health...'
-                    // Gunakan bat untuk curl di Windows
                     bat "curl -f --retry 3 --retry-delay 10 %APP_URL% || echo 'App might still be starting...'"
                     
                     echo '========================================'
