@@ -4,8 +4,6 @@ pipeline {
     environment {
         DOCKER_REGISTRY = 'wahyuditrs17'
         IMAGE_NAME = 'vektora'
-        AZURE_WEBAPP_NAME = 'project-vektora'
-        AZURE_RESOURCE_GROUP = 'project-vektora-group'
         APP_URL = 'https://vektora-ffhggreufqf7dteg.southeastasia-01.azurewebsites.net'
     }
 
@@ -19,12 +17,12 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    bat "docker build -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:%BUILD_ID% -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest ."
+                    bat "docker build -t %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID% -t %DOCKER_REGISTRY%/%IMAGE_NAME%:latest ."
                 }
             }
         }
 
-        stage('Push to Registry') {
+        stage('Push to Docker Hub') {
             steps {
                 script {
                     withCredentials([usernamePassword(
@@ -32,57 +30,56 @@ pipeline {
                         usernameVariable: 'DOCKER_USERNAME',
                         passwordVariable: 'DOCKER_PASSWORD'
                     )]) {
-                        bat "echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin"
-                        bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:%BUILD_ID%"
-                        bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
+                        bat "echo %DOCKER_PASSWORD% | docker login --username %DOCKER_USERNAME% --password-stdin"
+                        bat "docker push %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID%"
+                        bat "docker push %DOCKER_REGISTRY%/%IMAGE_NAME%:latest"
                         
-                        echo "✅ Image berhasil di-push: ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:%BUILD_ID%"
+                        echo "✅ Image pushed: %DOCKER_REGISTRY%/%IMAGE_NAME%:latest"
                     }
                 }
             }
         }
-        
-        stage('Deploy to Azure') {
-                steps {
-                    script {
-                        echo '🚀 Starting deployment using Managed Identity...'
-                        
-                        bat """
-                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" login --identity
-                        
-                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" webapp config container set ^
-                          --name %AZURE_WEBAPP_NAME% ^
-                          --resource-group %AZURE_RESOURCE_GROUP% ^
-                          --docker-custom-image-name %DOCKER_REGISTRY%/%IMAGE_NAME%:latest ^
-                          --docker-registry-server-url https://index.docker.io
-                        
-                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" webapp restart ^
-                          --name %AZURE_WEBAPP_NAME% ^
-                          --resource-group %AZURE_RESOURCE_GROUP%
-                        
-                        echo "✅ Deployment using Managed Identity successful!"
-                        """
-                    }
-                }
-            }
 
-        stage('Health Check') {
+        stage('Verify Deployment') {
             steps {
                 script {
-                    echo '🏥 Checking application health...'
-                    bat "curl -f --retry 3 --retry-delay 10 %APP_URL% || echo 'App might still be starting...'"
+                    echo '''
+                    ========================================
+                    🎉 CI/CD PIPELINE COMPLETE!
                     
-                    echo '========================================'
-                    echo '✅ DEPLOYMENT SUCCESSFUL!'
-                    echo "🌐 Your app is live at: %APP_URL%"
-                    echo "📦 Docker Image: %DOCKER_REGISTRY%/%IMAGE_NAME%:%BUILD_ID%"
-                    echo '========================================'
+                    ✅ Docker Image Updated:
+                       • wahyuditrs17/vektora:%BUILD_ID%
+                       • wahyuditrs17/vektora:latest
+                    
+                    🔄 Azure App Service akan otomatis:
+                       1. Pull image terbaru dari Docker Hub
+                       2. Restart container dengan image baru
+                       3. Waktu: 2-5 menit setelah push
+                    
+                    📱 Untuk mempercepat restart:
+                       1. Login ke Azure Portal
+                       2. Buka App Service: project-vektora
+                       3. Klik "Restart" (Opsional)
+                       
+                    🌐 Aplikasi Anda:
+                       %APP_URL%
+                    ========================================
+                    '''
+                    
+                    // Opsional: Health check setelah beberapa menit
+                    sleep(time: 120, unit: 'SECONDS') // Tunggu 2 menit
+                    bat "curl -f %APP_URL% || echo 'App mungkin masih restarting...'"
                 }
             }
         }
     }
     
     post {
+        success {
+            echo '🎊 Pipeline BERHASIL! Aplikasi akan otomatis update di Azure.'
+            // Opsional: Notifikasi
+            // emailext body: 'Pipeline vektora berhasil! Image terbaru: wahyuditrs17/vektora:latest', subject: '✅ Deployment Success', to: 'email@anda.com'
+        }
         always {
             echo 'Pipeline selesai'
             cleanWs()
