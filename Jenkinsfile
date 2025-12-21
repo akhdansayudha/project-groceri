@@ -43,33 +43,12 @@ pipeline {
         }
         
         stage('Deploy to Azure') {
-            steps {
-                script {
-                    echo '🚀 Starting deployment to Azure Web App...'
-                    
-                    // GUNAKAN 3 CREDENTIAL TERPISAH
-                    withCredentials([
-                        usernamePassword(
-                            credentialsId: 'azure-sp-credential',  // 1. Client ID & Secret
-                            usernameVariable: 'AZURE_CLIENT_ID',
-                            passwordVariable: 'AZURE_CLIENT_SECRET'
-                        ),
-                        string(
-                            credentialsId: 'azure-tenant-id',      // 2. Tenant ID
-                            variable: 'AZURE_TENANT_ID'
-                        ),
-                        string(
-                            credentialsId: 'azure-subscription-id', // 3. Subscription ID (opsional tapi direkomendasikan)
-                            variable: 'AZURE_SUBSCRIPTION_ID'
-                        )
-                    ]) {
-                        bat """
-                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" login --service-principal ^
-                          -u %AZURE_CLIENT_ID% ^
-                          -p %AZURE_CLIENT_SECRET% ^
-                          --tenant %AZURE_TENANT_ID%
+                steps {
+                    script {
+                        echo '🚀 Starting deployment using Managed Identity...'
                         
-                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" account set --subscription %AZURE_SUBSCRIPTION_ID%
+                        bat """
+                        "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" login --identity
                         
                         "C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az" webapp config container set ^
                           --name %AZURE_WEBAPP_NAME% ^
@@ -81,15 +60,11 @@ pipeline {
                           --name %AZURE_WEBAPP_NAME% ^
                           --resource-group %AZURE_RESOURCE_GROUP%
                         
-                        echo "✅ Deployment completed!"
+                        echo "✅ Deployment using Managed Identity successful!"
                         """
-                        
-                        echo '⏳ Waiting for deployment to complete...'
-                        sleep(time: 30, unit: 'SECONDS')
                     }
                 }
             }
-        }
 
         stage('Health Check') {
             steps {
