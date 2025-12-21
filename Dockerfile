@@ -1,41 +1,46 @@
-# Base image PHP + Apache
 FROM php:8.2-apache
 
-# Install dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    libzip-dev \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    zip \
+    unzip \
+    git \
     curl \
-    && docker-php-ext-install pdo pdo_mysql zip
-
-# Enable Apache rewrite
-RUN a2enmod rewrite
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy project files
-COPY . .
+# Copy composer.lock and composer.json
+COPY composer.lock composer.json ./
 
 # Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install Laravel dependencies
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Set permissions
+# Copy application files
+COPY . .
+
+# Set proper permissions
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Set Apache DocumentRoot ke /public
+# Set Apache server name to avoid warnings
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
+# Configure Apache to serve Laravel's public folder
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
-# Expose port 80
+# Enable mod_rewrite for Laravel routing
+RUN a2enmod rewrite
+
+# Expose port 80 for Azure App Service
 EXPOSE 80
 
-# Start Apache
+# Start Apache in foreground
 CMD ["apache2-foreground"]
