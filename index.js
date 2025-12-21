@@ -50,7 +50,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`=================================`);
   console.log(`🛒 GROCERI APP STARTED`);
   console.log(`📡 Port: ${PORT}`);
-  console.log(`📊 Health: http://localhost:${PORT}/health`);
+  console.log(`📊 Health endpoint ready at /health`);
   console.log(`🐳 Running in Docker Container`);
   console.log(`=================================`);
 });
