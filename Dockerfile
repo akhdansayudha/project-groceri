@@ -1,21 +1,18 @@
 FROM php:8.2-apache
 
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    zip \
-    unzip \
-    git \
-    curl \
+    zip unzip git curl \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy composer.lock and composer.json
-COPY composer.lock composer.json ./
+# Copy all files first (agar artisan ada)
+COPY . .
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -23,17 +20,14 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy application files
-COPY . .
-
 # Set proper permissions
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Set Apache server name to avoid warnings
+# Set Apache server name
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
-# Configure Apache to serve Laravel's public folder
+# Serve Laravel's public folder
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
 # Enable mod_rewrite for Laravel routing
