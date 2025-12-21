@@ -24,18 +24,25 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'docker-hub-credential', variable: 'DOCKER_PASSWORD')]) {
-                        bat "echo ${DOCKER_PASSWORD} | docker login --username ${env.DOCKER_REGISTRY} --password-stdin"
+                    withCredentials([usernamePassword(
+                        credentialsId: 'docker-hub-credential',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )]) {
+                        // Login ke Docker Hub
+                        bat "echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin"
+                        
+                        // Push image
+                        bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
+                        bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
                     }
-                    bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
-                    bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
                 }
             }
         }
         
         stage('Deploy to Azure') {
             steps {
-                echo 'Deploy stage disabled for Windows testing'
+                echo 'Deploy stage disabled for now'
             }
         }
         
@@ -48,7 +55,7 @@ pipeline {
     
     post {
         always {
-            echo 'Pipeline selesai - lihat logs untuk detail'
+            echo 'Pipeline selesai'
             cleanWs()
         }
     }
