@@ -1,12 +1,12 @@
 pipeline {
-    agent any
+    agent any // atau 'agent { label 'linux' }' jika ada label khusus
 
     environment {
         DOCKER_REGISTRY = 'wahyuditrs17'
-        IMAGE_NAME = 'vektora'  // DIPERBAIKI: dari 'project-groceri' ke 'vektora'
-        AZURE_WEBAPP_NAME = 'project-vektora'  // Nama App Service
-        AZURE_RESOURCE_GROUP = 'project-vektora-group'  // Ganti jika berbeda
-        APP_URL = 'https://vektora-ffhggreufqf7dteg.southeastasia-01.azurewebsites.net'  // URL App Service Anda
+        IMAGE_NAME = 'vektora'
+        AZURE_WEBAPP_NAME = 'project-vektora'
+        AZURE_RESOURCE_GROUP = 'project-vektora-group' // Ganti jika berbeda
+        APP_URL = 'https://vektora-ffhggreufqf7dteg.southeastasia-01.azurewebsites.net'
     }
 
     stages {
@@ -19,8 +19,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // DIPERBAIKI: build image dengan nama 'vektora'
-                    bat "docker build -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID} -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest ."
+                    // Gunakan sh, bukan bat
+                    sh "docker build -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID} -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest ."
                 }
             }
         }
@@ -34,11 +34,11 @@ pipeline {
                         passwordVariable: 'DOCKER_PASSWORD'
                     )]) {
                         // Login ke Docker Hub
-                        bat "echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin"
+                        sh "echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin"
                         
-                        // DIPERBAIKI: push image 'vektora'
-                        bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
-                        bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
+                        // Push image
+                        sh "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
+                        sh "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
                         
                         echo "✅ Image berhasil di-push: ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
                     }
@@ -56,18 +56,23 @@ pipeline {
                         usernameVariable: 'AZURE_USERNAME',
                         passwordVariable: 'AZURE_PASSWORD'
                     )]) {
-                        // DIPERBAIKI: update dengan image 'vektora'
-                        bat """
-                        az login --service-principal -u %AZURE_USERNAME% -p %AZURE_PASSWORD% --tenant common
-                        az webapp config container set \\
-                          --name ${env.AZURE_WEBAPP_NAME} \\
-                          --resource-group ${env.AZURE_RESOURCE_GROUP} \\
-                          --docker-custom-image-name ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest \\
-                          --docker-registry-server-url https://index.docker.io
-                        """
+                        // PERUBAHAN PENTING: ganti 'bat' dengan 'sh' dan format command
+                        sh """
+                        az login --service-principal \
+                          -u $AZURE_USERNAME \
+                          -p $AZURE_PASSWORD \
+                          --tenant common
                         
-                        // Restart web app untuk apply perubahan
-                        bat "az webapp restart --name ${env.AZURE_WEBAPP_NAME} --resource-group ${env.AZURE_RESOURCE_GROUP}"
+                        az webapp config container set \
+                          --name ${env.AZURE_WEBAPP_NAME} \
+                          --resource-group ${env.AZURE_RESOURCE_GROUP} \
+                          --docker-custom-image-name ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest \
+                          --docker-registry-server-url https://index.docker.io
+                        
+                        az webapp restart \
+                          --name ${env.AZURE_WEBAPP_NAME} \
+                          --resource-group ${env.AZURE_RESOURCE_GROUP}
+                        """
                         
                         echo '⏳ Waiting for deployment to complete...'
                         sleep(time: 30, unit: 'SECONDS')
@@ -80,8 +85,8 @@ pipeline {
             steps {
                 script {
                     echo '🏥 Checking application health...'
-                    // DIPERBAIKI: menggunakan URL App Service yang benar
-                    bat "curl -f --retry 3 --retry-delay 10 ${env.APP_URL} || echo 'App might still be starting...'"
+                    // Ganti 'bat' dengan 'sh' untuk curl
+                    sh "curl -f --retry 3 --retry-delay 10 ${env.APP_URL} || echo 'App might still be starting...'"
                     
                     echo '========================================'
                     echo '✅ DEPLOYMENT SUCCESSFUL!'
