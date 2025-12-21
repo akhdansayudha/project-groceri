@@ -3,7 +3,10 @@ pipeline {
 
     environment {
         DOCKER_REGISTRY = 'wahyuditrs17'
-        IMAGE_NAME = 'project-groceri'
+        IMAGE_NAME = 'vektora'  // DIPERBAIKI: dari 'project-groceri' ke 'vektora'
+        AZURE_WEBAPP_NAME = 'project-vektora'  // Nama App Service
+        AZURE_RESOURCE_GROUP = 'project-vektora-group'  // Ganti jika berbeda
+        APP_URL = 'https://vektora-ffhggreufqf7dteg.southeastasia-01.azurewebsites.net'  // URL App Service Anda
     }
 
     stages {
@@ -14,83 +17,81 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-    steps {
-        script {
-            bat "docker build -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID} -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest ."
+            steps {
+                script {
+                    // DIPERBAIKI: build image dengan nama 'vektora'
+                    bat "docker build -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID} -t ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest ."
+                }
+            }
         }
-    }
-}
 
         stage('Push to Registry') {
-    steps {
-        script {
-            withCredentials([usernamePassword(
-                credentialsId: 'docker-hub-credential',
-                usernameVariable: 'DOCKER_USERNAME',
-                passwordVariable: 'DOCKER_PASSWORD'
-            )]) {
-                // Login ke Docker Hub
-                bat "echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin"
-                
-                // **TAMBAHKAN: Tag image sebagai 'latest'**
-                bat "docker tag ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID} ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
-                
-                // Push image dengan tag BUILD_ID
-                bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
-                
-                // Push image dengan tag 'latest'
-                bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
+            steps {
+                script {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'docker-hub-credential',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )]) {
+                        // Login ke Docker Hub
+                        bat "echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin"
+                        
+                        // DIPERBAIKI: push image 'vektora'
+                        bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
+                        bat "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest"
+                        
+                        echo "✅ Image berhasil di-push: ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
+                    }
+                }
             }
         }
-    }
-}
         
         stage('Deploy to Azure') {
-    steps {
-        script {
-            echo '🚀 Starting deployment to Azure Web App...'
-            
-            withCredentials([usernamePassword(
-                credentialsId: 'azure-webapp-publish', // ID credential yang baru dibuat
-                usernameVariable: 'AZURE_USERNAME',
-                passwordVariable: 'AZURE_PASSWORD'
-            )]) {
-                // 1. Update Web App dengan image terbaru dari Docker Hub
-                bat """
-                az login --service-principal -u %AZURE_USERNAME% -p %AZURE_PASSWORD% --tenant common
-                az webapp config container set \
-                  --name project-vektora \
-                  --resource-group project-vektora-group \
-                  --docker-custom-image-name wahyuditrs17/project-groceri:%BUILD_ID% \
-                  --docker-registry-server-url https://index.docker.io
-                """
-                
-                // 2. Restart web app untuk apply perubahan
-                bat "az webapp restart --name project-vektora --resource-group project-vektora-group"
-                
-                echo '⏳ Waiting for deployment to complete...'
-                sleep(time: 30, unit: 'SECONDS')
+            steps {
+                script {
+                    echo '🚀 Starting deployment to Azure Web App...'
+                    
+                    withCredentials([usernamePassword(
+                        credentialsId: 'azure-webapp-publish',
+                        usernameVariable: 'AZURE_USERNAME',
+                        passwordVariable: 'AZURE_PASSWORD'
+                    )]) {
+                        // DIPERBAIKI: update dengan image 'vektora'
+                        bat """
+                        az login --service-principal -u %AZURE_USERNAME% -p %AZURE_PASSWORD% --tenant common
+                        az webapp config container set \\
+                          --name ${env.AZURE_WEBAPP_NAME} \\
+                          --resource-group ${env.AZURE_RESOURCE_GROUP} \\
+                          --docker-custom-image-name ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:latest \\
+                          --docker-registry-server-url https://index.docker.io
+                        """
+                        
+                        // Restart web app untuk apply perubahan
+                        bat "az webapp restart --name ${env.AZURE_WEBAPP_NAME} --resource-group ${env.AZURE_RESOURCE_GROUP}"
+                        
+                        echo '⏳ Waiting for deployment to complete...'
+                        sleep(time: 30, unit: 'SECONDS')
+                    }
+                }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                script {
+                    echo '🏥 Checking application health...'
+                    // DIPERBAIKI: menggunakan URL App Service yang benar
+                    bat "curl -f --retry 3 --retry-delay 10 ${env.APP_URL} || echo 'App might still be starting...'"
+                    
+                    echo '========================================'
+                    echo '✅ DEPLOYMENT SUCCESSFUL!'
+                    echo "🌐 Your app is live at: ${env.APP_URL}"
+                    echo "📦 Docker Image: ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.BUILD_ID}"
+                    echo '========================================'
+                }
             }
         }
     }
-}
-
-stage('Health Check') {
-    steps {
-        script {
-            echo '🏥 Checking application health...'
-            // Test aplikasi setelah deploy
-            bat "curl -f --retry 3 --retry-delay 10 https://project-vektora.azurewebsites.net/ || echo 'App might still be starting...'"
-            
-            echo '========================================'
-            echo '✅ DEPLOYMENT SUCCESSFUL!'
-            echo '🌐 Your app is live at: https://project-vektora.azurewebsites.net'
-            echo '📦 Docker Image: wahyuditrs17/project-groceri:%BUILD_ID%'
-            echo '========================================'
-        }
-    }
-}
-        
     
     post {
         always {
