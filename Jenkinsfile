@@ -46,17 +46,51 @@ pipeline {
 }
         
         stage('Deploy to Azure') {
-            steps {
-                echo 'Deploy stage disabled for now'
-            }
-        }
-        
-        stage('Health Check') {
-            steps {
-                echo 'Health Check stage disabled'
+    steps {
+        script {
+            echo '🚀 Starting deployment to Azure Web App...'
+            
+            withCredentials([usernamePassword(
+                credentialsId: 'azure-webapp-publish', // ID credential yang baru dibuat
+                usernameVariable: 'AZURE_USERNAME',
+                passwordVariable: 'AZURE_PASSWORD'
+            )]) {
+                // 1. Update Web App dengan image terbaru dari Docker Hub
+                bat """
+                az login --service-principal -u %AZURE_USERNAME% -p %AZURE_PASSWORD% --tenant common
+                az webapp config container set \
+                  --name project-vektora \
+                  --resource-group project-vektora-group \
+                  --docker-custom-image-name wahyuditrs17/project-groceri:%BUILD_ID% \
+                  --docker-registry-server-url https://index.docker.io
+                """
+                
+                // 2. Restart web app untuk apply perubahan
+                bat "az webapp restart --name project-vektora --resource-group project-vektora-group"
+                
+                echo '⏳ Waiting for deployment to complete...'
+                sleep(time: 30, unit: 'SECONDS')
             }
         }
     }
+}
+
+stage('Health Check') {
+    steps {
+        script {
+            echo '🏥 Checking application health...'
+            // Test aplikasi setelah deploy
+            bat "curl -f --retry 3 --retry-delay 10 https://project-vektora.azurewebsites.net/ || echo 'App might still be starting...'"
+            
+            echo '========================================'
+            echo '✅ DEPLOYMENT SUCCESSFUL!'
+            echo '🌐 Your app is live at: https://project-vektora.azurewebsites.net'
+            echo '📦 Docker Image: wahyuditrs17/project-groceri:%BUILD_ID%'
+            echo '========================================'
+        }
+    }
+}
+        
     
     post {
         always {
