@@ -160,9 +160,25 @@ class StaffPerformanceController extends Controller
                 ->where('status', 'completed')->count(),
             'total_earned' => $staff->wallet->total_earned ?? 0,
             'current_balance' => $staff->wallet->balance ?? 0,
-            // BARU: Total Payout Rupiah
-            'total_payout_idr' => StaffPayout::where('user_id', $id)->where('status', 'approved')->sum('amount_currency')
+            'total_payout_idr' => StaffPayout::where('user_id', $id)->where('status', 'approved')->sum('amount_currency'),
+            'total_payout_tokens' => StaffPayout::where('user_id', $id)->where('status', 'approved')->sum('amount_token')
         ];
+
+        // --- TAMBAHAN LOGIKA PERFORMANCE GRADE ---
+        // Ambil semua task completed untuk kalkulasi akurat
+        $completedTasksAll = Task::where('assignee_id', $id)
+            ->where('status', 'completed')
+            ->get();
+
+        $totalCompleted = $completedTasksAll->count();
+
+        // Hitung yang on-time
+        $onTimeCount = $completedTasksAll->filter(function ($task) {
+            return $task->deadline && $task->completed_at <= $task->deadline;
+        })->count();
+
+        // Hitung persentase
+        $onTimeRate = $totalCompleted > 0 ? round(($onTimeCount / $totalCompleted) * 100) : 0;
 
         // 2. BARU: Statistik Breakdown Service (Jenis Project)
         // Mengambil project completed, dikelompokkan per nama service, dihitung jumlahnya
@@ -185,6 +201,68 @@ class StaffPerformanceController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('admin.performance.show', compact('staff', 'stats', 'serviceStats', 'projects', 'payouts'));
+        $currentRate = DB::table('agency_settings')->where('id', 1)->value('payout_rate_per_token') ?? 10000;
+
+        return view('admin.performance.show', compact('staff', 'stats', 'serviceStats', 'projects', 'payouts', 'currentRate', 'onTimeRate'));
+    }
+
+    // --- METHOD BARU: ADMIN MANUAL PAYOUT ---
+    public function storeManualPayout(Request $request, $id)
+    {
+        $request->validate([
+            'amount_token' => 'required|integer|min:1',
+            'proof_file'   => 'nullable|file|image|max:2048',
+            'admin_note'   => 'nullable|string'
+        ]);
+
+        DB::transaction(function () use ($request, $id) {
+            $staff = User::with('wallet')->findOrFail($id);
+
+            // Validasi Saldo
+            if ($staff->wallet->balance < $request->amount_token) {
+                throw new \Exception("Saldo staff tidak mencukupi.");
+            }
+
+            // 1. Hitung Rupiah
+            $rate = DB::table('agency_settings')->where('id', 1)->value('payout_rate_per_token') ?? 10000;
+            $amountIdr = $request->amount_token * $rate;
+
+            // 2. Upload Bukti (Jika ada)
+            $proofPath = null;
+            if ($request->hasFile('proof_file')) {
+                $proofPath = $request->file('proof_file')->store('payouts', 'supabase');
+            }
+
+            // 3. Buat Record Payout & SIMPAN KE VARIABEL $payout
+            $payout = StaffPayout::create([
+                'user_id' => $staff->id,
+                'amount_token' => $request->amount_token,
+                'amount_currency' => $amountIdr,
+                'status' => 'approved',
+                'proof_url' => $proofPath,
+                'bank_name' => $staff->bank_name,
+                'bank_account' => $staff->bank_account,
+                'bank_holder' => $staff->bank_holder,
+                'admin_note' => $request->admin_note ?? 'Manual payout by Admin',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // 4. Potong Saldo Wallet
+            $staff->wallet->decrement('balance', $request->amount_token);
+
+            // 5. Catat Transaksi Wallet (UPDATE DESCRIPTION DISINI)
+            Transaction::create([
+                'wallet_id' => $staff->wallet->id,
+                'type' => 'payout',
+                'amount' => -$request->amount_token, // Minus
+                // Menambahkan ID Payout ke deskripsi:
+                'description' => "Payout Processed by Admin #PY-{$payout->id}",
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        return back()->with('success', 'Manual payout processed successfully.');
     }
 }

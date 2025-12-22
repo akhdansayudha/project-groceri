@@ -183,7 +183,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         Route::get('/performance/{id}', [StaffPerformanceController::class, 'show'])->name('performance.show');
         Route::post('/performance/{id}/approve', [StaffPerformanceController::class, 'approvePayout'])->name('performance.approve');
         Route::post('/performance/{id}/reject', [StaffPerformanceController::class, 'rejectPayout'])->name('performance.reject');
-
+        Route::post('/performance/{id}/manual-payout', [StaffPerformanceController::class, 'storeManualPayout'])->name('performance.manual_payout');
         Route::post('/performance/rate/update', [StaffPerformanceController::class, 'updateRate'])->name('performance.update_rate');
     });
 });

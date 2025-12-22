@@ -203,7 +203,7 @@
                                 <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-1">Full
                                     Name</label>
                                 <input type="text" name="name" id="reg-name" required value="{{ old('name') }}"
-                                    placeholder="John Doe"
+                                    placeholder="Naufal Fahrezy"
                                     class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-black outline-none focus:border-black focus:bg-white transition-all font-medium">
                             </div>
 
