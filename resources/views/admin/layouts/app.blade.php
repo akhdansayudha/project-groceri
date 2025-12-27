@@ -30,6 +30,18 @@
     {{-- 3. FEATHER ICONS --}}
     <script src="https://unpkg.com/feather-icons"></script>
 
+    {{-- 4. FLATPICKR (Date Range Picker) --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    {{-- Theme Dark (Opsional, agar sesuai desain Vektora) --}}
+    <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    {{-- 5. APEXCHARTS (Untuk Grafik Analytics) --}}
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    {{-- STACK STYLES (Untuk injeksi CSS dari view spesifik) --}}
+    @stack('styles')
+
     <style>
         /* ... style custom scrollbar tetap sama ... */
         .custom-scrollbar::-webkit-scrollbar {
@@ -62,7 +74,7 @@
             }
         }
 
-        /* Tambahkan ini untuk mencegah kedipan pada elemen Alpine.js saat loading */
+        /* Mencegah kedipan Alpine.js */
         [x-cloak] {
             display: none !important;
         }
@@ -82,15 +94,14 @@
             @include('admin.partials.header')
 
             {{-- DYNAMIC CONTENT & FOOTER WRAPPER --}}
-            {{-- Ubah layout menjadi flex-col agar footer bisa didorong ke bawah --}}
             <div class="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
 
-                {{-- Content Area: flex-1 akan membuatnya mengisi sisa ruang --}}
+                {{-- Content Area --}}
                 <div class="flex-1 p-8">
                     @yield('content')
                 </div>
 
-                {{-- Footer Area: Menempel di bawah konten atau di dasar layar --}}
+                {{-- Footer Area --}}
                 <div class="px-8">
                     @include('admin.partials.footer')
                 </div>
@@ -99,9 +110,13 @@
         </main>
     </div>
 
+    {{-- Inisialisasi Feather Icons --}}
     <script>
         feather.replace();
     </script>
+
+    {{-- STACK SCRIPTS (Untuk injeksi JS dari view spesifik) --}}
+    @stack('scripts')
 </body>
 
 </html>

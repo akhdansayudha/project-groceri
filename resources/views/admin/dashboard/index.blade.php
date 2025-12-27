@@ -217,4 +217,133 @@
             </div>
         </div>
     </div>
+
+    {{-- SECTION BARU: FINANCE & PAYOUTS --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 fade-in">
+
+        {{-- 1. RECENT INVOICES --}}
+        <div class="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm flex flex-col">
+            <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-bold flex items-center gap-2">
+                    <i data-feather="file-text" class="w-4 h-4 text-gray-400"></i> Recent Invoices
+                </h3>
+                {{-- Button View All ke Index Invoice --}}
+                <a href="{{ route('admin.invoices.index') }}"
+                    class="text-xs font-bold text-gray-400 hover:text-black transition-colors">
+                    View All
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <tbody class="divide-y divide-gray-50 text-sm">
+                        @forelse($recentInvoices as $inv)
+                            <tr class="hover:bg-gray-50 transition-colors group cursor-pointer"
+                                onclick="window.location='{{ route('admin.invoices.show', $inv->id) }}'">
+                                <td class="px-6 py-4">
+                                    <p class="font-mono font-bold text-xs text-gray-500 mb-0.5">
+                                        {{ $inv->invoice_number }}</p>
+                                    <p class="font-bold text-gray-900 text-xs">
+                                        {{ Str::limit($inv->user->full_name, 30) }}</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="font-bold text-gray-900">Rp
+                                        {{ number_format($inv->amount, 0, ',', '.') }}</span>
+                                    <p class="text-[10px] text-gray-400">{{ $inv->created_at->format('d M Y, H:i') }}</p>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    @if ($inv->status == 'paid')
+                                        <span
+                                            class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold bg-green-50 text-green-700 border border-green-100">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div> Paid
+                                        </span>
+                                    @elseif ($inv->status == 'cancelled')
+                                        <span
+                                            class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-gray-400"></div> Cancelled
+                                        </span>
+                                    @else
+                                        <span
+                                            class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold bg-yellow-50 text-yellow-700 border border-yellow-100">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
+                                            Unpaid
+                                        </span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="px-6 py-8 text-center text-gray-400 text-xs">
+                                    No recent invoices found.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- 2. PAYOUT REQUESTS NEEDED --}}
+        <div class="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm flex flex-col">
+            <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                    <h3 class="font-bold">Payout Requests Needed</h3>
+                </div>
+                {{-- Link ke Halaman Performance / Payout --}}
+                <a href="{{ route('admin.performance.index') }}"
+                    class="text-xs font-bold text-gray-400 hover:text-black transition-colors">
+                    Manage
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <tbody class="divide-y divide-gray-50 text-sm">
+                        @forelse($pendingPayouts as $payout)
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
+                                            <img src="{{ $payout->user->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($payout->user->full_name) }}"
+                                                class="w-full h-full object-cover">
+                                        </div>
+                                        <div>
+                                            <p class="font-bold text-xs text-gray-900">{{ $payout->user->full_name }}
+                                            </p>
+                                            <p class="text-[10px] text-gray-400">
+                                                {{ $payout->created_at->diffForHumans() }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <p class="font-bold text-gray-900">Rp
+                                        {{ number_format($payout->amount_currency, 0, ',', '.') }}</p>
+                                    <p class="text-[10px] text-gray-500 font-mono">{{ $payout->amount_token }} Token
+                                    </p>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="{{ route('admin.performance.index', ['staff_page' => 1]) }}"
+                                        class="inline-flex items-center justify-center p-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-all shadow-sm"
+                                        title="Process Payout">
+                                        <i data-feather="arrow-right" class="w-3 h-3"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="px-6 py-10 text-center text-gray-400">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i data-feather="check-circle" class="w-8 h-8 mb-2 text-green-500"></i>
+                                        <p class="text-xs">No pending payouts.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 @endsection

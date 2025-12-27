@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 // --- CONTROLLERS IMPORT ---
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 
 // Client Controllers
 use App\Http\Controllers\Client\DashboardController;
@@ -57,6 +58,11 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+Route::controller(GoogleAuthController::class)->group(function () {
+    Route::get('auth/google', 'redirect')->name('google.redirect');
+    Route::get('auth/google/callback', 'callback')->name('google.callback');
+});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -78,6 +84,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('requests', RequestController::class);
         Route::get('requests/{request}/chat', [RequestController::class, 'chat'])->name('requests.chat');
         Route::post('requests/{request}/chat', [RequestController::class, 'chatStore'])->name('requests.chat.store');
+
         // Di dalam group prefix 'client' -> 'requests'
         Route::post('requests/{request}/complete', [RequestController::class, 'markCompleted'])->name('requests.complete');
         Route::post('requests/{request}/revision', [RequestController::class, 'requestRevision'])->name('requests.revision');
@@ -101,6 +108,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
         Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::post('/invoices/{invoice}/simulate', [InvoiceController::class, 'simulatePayment'])->name('invoices.simulate');
+        Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
+        Route::post('/invoices/{invoice}/simulate', [InvoiceController::class, 'simulatePayment'])->name('invoices.simulate');
+        Route::put('/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
 
         // Support & Settings
         Route::get('/support', [SupportController::class, 'index'])->name('support');
@@ -138,6 +148,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         // --- GROUP 1: AGENCY OVERVIEW ---
         Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
         Route::get('/analytics', [AdminAnalyticsController::class, 'index'])->name('analytics');
+        Route::get('/analytics/export', [AdminAnalyticsController::class, 'exportPdf'])->name('analytics.export');
 
         // --- GROUP 2: PRODUCTION (PROJECTS) ---
         Route::resource('projects', AdminProjectController::class);
@@ -170,7 +181,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         // --- GROUP 5: FINANCE ---
         Route::resource('invoices', App\Http\Controllers\Admin\InvoiceController::class)->only(['index', 'show']);
         Route::put('invoices/{invoice}/paid', [App\Http\Controllers\Admin\InvoiceController::class, 'markAsPaid'])->name('invoices.paid');
-
+        Route::put('invoices/{invoice}/cancel', [App\Http\Controllers\Admin\InvoiceController::class, 'cancel'])->name('invoices.cancel');
+        
         // TOKEN MANAGER (NEW)
         Route::get('/tokens', [App\Http\Controllers\Admin\TokenController::class, 'index'])->name('tokens.index');
         Route::post('/tokens/adjust', [App\Http\Controllers\Admin\TokenController::class, 'storeAdjustment'])->name('tokens.adjust');

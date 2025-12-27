@@ -64,7 +64,7 @@
         </div>
 
         {{-- CHAT BODY --}}
-        <div class="flex-1 bg-gray-50 p-6 overflow-y-auto custom-scrollbar" id="chat-container">
+        <div class="flex-1 bg-[#F9F8F6] p-6 overflow-y-auto custom-scrollbar" id="chat-container">
 
             {{-- Welcome Message --}}
             <div class="flex justify-center mb-6">
@@ -74,10 +74,19 @@
                 </div>
             </div>
 
+            @php
+                $lastDate = null;
+            @endphp
+
             @forelse($task->messages as $msg)
                 @php
                     $isMe = $msg->sender_id === Auth::id();
                     $senderRole = $msg->user->role ?? 'unknown';
+
+                    // UPDATED: Date Separator Logic
+                    $msgDate = $msg->created_at->format('Y-m-d');
+                    $showDate = $lastDate !== $msgDate;
+                    $lastDate = $msgDate;
 
                     // Logic Deteksi Pesan Revisi
                     $isRevisionMsg = Str::startsWith($msg->content, 'REVISION REQUESTED:');
@@ -91,6 +100,16 @@
                         default => ['bg' => 'bg-gray-100', 'text' => 'text-gray-600', 'label' => 'User'],
                     };
                 @endphp
+
+                {{-- UPDATED: Render Date Separator if Date Changed --}}
+                @if ($showDate)
+                    <div class="flex justify-center my-6 fade-in">
+                        <span
+                            class="bg-gray-200/50 text-gray-500 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm backdrop-blur-sm">
+                            {{ $msg->created_at->isToday() ? 'Today' : $msg->created_at->translatedFormat('d F Y') }}
+                        </span>
+                    </div>
+                @endif
 
                 {{-- TAMPILAN KHUSUS UNTUK REVISION NOTES --}}
                 @if ($isRevisionMsg)
@@ -247,8 +266,9 @@
                     </label>
 
                     {{-- Text Area Wrapper --}}
+                    {{-- UPDATED: Removed focus rings on wrapper and textarea --}}
                     <div
-                        class="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-black/5 focus-within:border-black focus-within:bg-white transition-all shadow-sm">
+                        class="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:bg-white transition-all shadow-sm">
 
                         {{-- File Preview Indicator --}}
                         <div id="file-preview"
@@ -264,7 +284,7 @@
                         </div>
 
                         <textarea name="message" rows="1" placeholder="Ketik pesan Anda..."
-                            class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm text-gray-900 placeholder-gray-400 resize-none max-h-32 leading-relaxed"
+                            class="w-full bg-transparent p-0 text-sm text-gray-900 placeholder-gray-400 resize-none max-h-32 leading-relaxed outline-none border-none ring-0 focus:ring-0"
                             oninput="autoResize(this)"></textarea>
                     </div>
 

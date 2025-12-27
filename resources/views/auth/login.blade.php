@@ -182,6 +182,30 @@
                                     </svg>
                                 </span>
                             </button>
+
+                            {{-- Divider --}}
+                            <div class="relative my-6">
+                                <div class="absolute inset-0 flex items-center">
+                                    <div class="w-full border-t border-gray-200"></div>
+                                </div>
+                                <div class="relative flex justify-center text-[10px] uppercase">
+                                    <span class="bg-white px-2 text-gray-400 font-bold tracking-widest">Or continue
+                                        with</span>
+                                </div>
+                            </div>
+
+                            {{-- Google Button --}}
+                            <a href="{{ route('google.redirect') }}"
+                                class="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 hover:border-black hover:text-black transition-all hover-target group">
+                                {{-- Google Icon SVG --}}
+                                <svg class="h-5 w-5 grayscale group-hover:grayscale-0 transition-all" aria-hidden="true"
+                                    viewBox="0 0 24 24">
+                                    <path
+                                        d="M12.0003 20.45c4.64 0 8.05-3.26 8.05-8.15 0-.82-.08-1.42-.2-2.05H12v3.9h4.6c-.2 1.25-1.2 3.3-4.6 3.3-2.8 0-5.1-2.25-5.1-5.05s2.3-5.05 5.1-5.05c1.3 0 2.45.45 3.35 1.3l2.5-2.5c-1.6-1.55-3.7-2.45-5.85-2.45-4.7 0-8.5 3.8-8.5 8.5s3.8 8.5 8.5 8.5z"
+                                        fill="currentColor" />
+                                </svg>
+                                Sign in with Google
+                            </a>
                         </form>
                     </div>
 

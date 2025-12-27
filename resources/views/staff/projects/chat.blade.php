@@ -81,21 +81,31 @@
         </div>
 
         {{-- CHAT BODY --}}
-        <div class="flex-1 bg-gray-50 p-6 overflow-y-auto space-y-6 custom-scrollbar" id="chat-container">
+        {{-- UPDATED: Background color changed to bg-[#F9F8F6] --}}
+        <div class="flex-1 bg-[#F9F8F6] p-6 overflow-y-auto custom-scrollbar" id="chat-container">
 
             {{-- Welcome --}}
-            <div class="flex justify-center">
+            <div class="flex justify-center mb-6">
                 <div
                     class="bg-white border border-gray-200 px-4 py-2 rounded-full text-[10px] text-gray-400 font-medium shadow-sm uppercase tracking-wide">
                     Project Discussion Room
                 </div>
             </div>
 
+            @php
+                $lastDate = null;
+            @endphp
+
             @forelse($task->messages as $msg)
                 @php
                     // Logic Cek Pengirim (Apakah saya?)
                     $isMe = $msg->sender_id === Auth::id();
                     $senderRole = $msg->user->role ?? 'unknown';
+
+                    // UPDATED: Date Separator Logic
+                    $msgDate = $msg->created_at->format('Y-m-d');
+                    $showDate = $lastDate !== $msgDate;
+                    $lastDate = $msgDate;
 
                     // Logic Deteksi Pesan Revisi
                     $isRevisionMsg = Str::startsWith($msg->content, 'REVISION REQUESTED:');
@@ -109,6 +119,16 @@
                         default => ['bg' => 'bg-gray-100', 'text' => 'text-gray-600', 'label' => 'User'],
                     };
                 @endphp
+
+                {{-- UPDATED: Render Date Separator if Date Changed --}}
+                @if ($showDate)
+                    <div class="flex justify-center my-6 fade-in">
+                        <span
+                            class="bg-gray-200/50 text-gray-500 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm backdrop-blur-sm">
+                            {{ $msg->created_at->isToday() ? 'Today' : $msg->created_at->translatedFormat('d F Y') }}
+                        </span>
+                    </div>
+                @endif
 
                 @if ($isRevisionMsg)
                     {{-- TAMPILAN KHUSUS UNTUK REVISION NOTES (Orange Alert) --}}
@@ -144,7 +164,7 @@
                     </div>
                 @else
                     {{-- TAMPILAN CHAT BIASA --}}
-                    <div class="flex w-full {{ $isMe ? 'justify-end' : 'justify-start' }}">
+                    <div class="flex w-full mb-4 {{ $isMe ? 'justify-end' : 'justify-start' }}">
                         <div class="flex max-w-[85%] md:max-w-[75%] gap-3 {{ $isMe ? 'flex-row-reverse' : 'flex-row' }}">
 
                             {{-- Avatar Pengirim --}}
@@ -228,7 +248,7 @@
         </div>
 
         {{-- FOOTER INPUT --}}
-        <div class="bg-white p-4 border-t border-gray-200 rounded-b-3xl">
+        <div class="bg-white p-4 border-t border-gray-200 rounded-b-3xl relative z-20">
             @if ($task->status === 'completed')
                 {{-- TAMPILAN JIKA PROJECT SELESAI --}}
                 <div
@@ -245,28 +265,33 @@
 
                     {{-- Upload --}}
                     <label
-                        class="p-3 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-black hover:border-black cursor-pointer transition-all flex-shrink-0">
+                        class="p-3 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-black hover:border-black cursor-pointer transition-all flex-shrink-0 group">
                         <input type="file" name="attachment" class="hidden" onchange="checkFile(this)">
-                        <i data-feather="paperclip" class="w-5 h-5"></i>
+                        <i data-feather="paperclip" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
                     </label>
 
-                    {{-- Textarea --}}
+                    {{-- Textarea Wrapper --}}
+                    {{-- UPDATED: Removed focus-within:border-black, made it cleaner --}}
                     <div
-                        class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus-within:border-black focus-within:bg-white transition-all">
-                        <textarea name="message" rows="1" placeholder="Type a message..."
-                            class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm resize-none max-h-32"
-                            oninput="autoResize(this)"></textarea>
+                        class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus-within:bg-white transition-all shadow-sm">
 
+                        {{-- File Preview --}}
                         <div id="file-preview"
-                            class="hidden mt-2 text-xs font-bold text-purple-600 flex items-center gap-1">
+                            class="hidden mb-2 pb-2 border-b border-gray-100 text-xs font-bold text-purple-600 flex items-center gap-1">
                             <i data-feather="file" class="w-3 h-3"></i>
                             <span id="file-name">filename.jpg</span>
                         </div>
+
+                        {{-- Textarea --}}
+                        {{-- UPDATED: Added outline-none border-none ring-0 focus:ring-0 --}}
+                        <textarea name="message" rows="1" placeholder="Type a message..."
+                            class="w-full bg-transparent p-0 text-sm resize-none max-h-32 leading-relaxed outline-none border-none ring-0 focus:ring-0 placeholder-gray-400"
+                            oninput="autoResize(this)"></textarea>
                     </div>
 
                     {{-- Send --}}
                     <button type="submit"
-                        class="p-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 shadow-lg shadow-purple-200 flex-shrink-0 transition-all">
+                        class="p-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 shadow-lg shadow-purple-200 flex-shrink-0 transition-all hover:-translate-y-0.5 active:translate-y-0">
                         <i data-feather="send" class="w-5 h-5"></i>
                     </button>
                 </form>

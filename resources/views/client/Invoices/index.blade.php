@@ -15,39 +15,72 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 fade-in">
-        {{-- Card Unpaid --}}
+        {{-- Card Unpaid Balance --}}
         <div
-            class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm relative overflow-hidden group hover:border-red-200 transition-colors">
-            <div class="absolute right-0 top-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                <i data-feather="alert-circle" class="w-24 h-24 text-red-600 transform rotate-12"></i>
-            </div>
-            <div class="relative z-10">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                    <p class="text-xs text-gray-500 font-bold uppercase tracking-widest">Unpaid Balance</p>
+            class="bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all duration-300">
+            <div class="flex flex-col h-full justify-between relative z-10">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Unpaid Balance</p>
+                        <h3 class="text-3xl font-bold text-gray-900 tracking-tight leading-none">
+                            Rp {{ number_format($stats['unpaid_amount'], 0, ',', '.') }}
+                        </h3>
+                    </div>
+                    <div class="p-2.5 bg-red-50 text-red-600 rounded-xl group-hover:scale-105 transition-transform">
+                        <i data-feather="alert-circle" class="w-5 h-5"></i>
+                    </div>
                 </div>
-                <h3 class="text-3xl font-bold text-red-600 tracking-tight">
-                    Rp {{ number_format($stats['unpaid_amount'], 0, ',', '.') }}
-                </h3>
-                <p class="text-xs text-gray-400 mt-2 font-medium">{{ $stats['unpaid'] }} Tagihan Belum Dibayar</p>
+
+                <div class="mt-2">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 border border-red-100">
+                        <span class="relative flex h-2 w-2">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                        <span class="text-[10px] font-bold text-red-700 uppercase tracking-wide">
+                            {{ $stats['unpaid'] }} Invoice Pending
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Background Pattern --}}
+            <div
+                class="absolute -bottom-6 -right-6 w-32 h-32 bg-red-50 rounded-full blur-2xl opacity-50 pointer-events-none">
             </div>
         </div>
 
-        {{-- Card Paid --}}
+        {{-- Card Lifetime Paid --}}
         <div
-            class="bg-white p-6 rounded-3xl border border-green-100 shadow-sm relative overflow-hidden group hover:border-green-200 transition-colors">
-            <div class="absolute right-0 top-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                <i data-feather="check-circle" class="w-24 h-24 text-green-600 transform -rotate-12"></i>
-            </div>
-            <div class="relative z-10">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                    <p class="text-xs text-gray-500 font-bold uppercase tracking-widest">Lifetime Paid</p>
+            class="bg-black text-white p-6 md:p-8 rounded-[2rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-transform duration-300">
+            <div class="flex flex-col h-full justify-between relative z-10">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Lifetime Paid</p>
+                        <h3 class="text-3xl font-bold text-white tracking-tight leading-none">
+                            Rp {{ number_format($stats['paid_total'], 0, ',', '.') }}
+                        </h3>
+                    </div>
+                    <div
+                        class="p-2.5 bg-white/10 text-white rounded-xl group-hover:bg-white group-hover:text-black transition-colors">
+                        <i data-feather="check-circle" class="w-5 h-5"></i>
+                    </div>
                 </div>
-                <h3 class="text-3xl font-bold text-gray-900 tracking-tight">
-                    Rp {{ number_format($stats['paid_total'], 0, ',', '.') }}
-                </h3>
-                <p class="text-xs text-green-600 mt-2 font-bold">Terverifikasi & Lunas</p>
+
+                <div class="mt-2">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 border border-white/5">
+                        <i data-feather="trending-up" class="w-3 h-3 text-green-400"></i>
+                        <span class="text-[10px] font-bold text-gray-300 uppercase tracking-wide">
+                            Total Verified
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Background Pattern --}}
+            <div
+                class="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-white/5 to-transparent pointer-events-none">
             </div>
         </div>
     </div>

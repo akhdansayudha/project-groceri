@@ -8,7 +8,7 @@
         <span class="hidden md:block text-gray-300 text-xs">&bull;</span>
 
         <div class="text-xs text-gray-500 font-medium">
-            Dibuat oleh <span class="text-gray font-bold">Kelompok 3 Komputasi Awan IS-06-03</span>
+            Dibuat oleh <span class="text-gray font-bold">Vektora Team</span>
         </div>
     </div>
 </footer>

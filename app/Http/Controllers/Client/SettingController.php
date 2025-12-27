@@ -20,31 +20,40 @@ class SettingController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
+        $isGoogleUser = !empty($user->google_id);
 
-        // 1. Validasi Input (Ganti name jadi full_name)
-        $request->validate([
+        // 1. Setup Rules Dasar (Nama & Avatar selalu boleh diubah)
+        $rules = [
             'full_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
             'avatar' => 'nullable|image|max:2048',
-            'current_password' => 'nullable|required_with:new_password',
-            'new_password' => 'nullable|min:8|confirmed',
-        ]);
+        ];
 
-        // 2. Update Basic Info (Gunakan full_name)
+        // 2. Tambahkan Rules Email & Password HANYA jika BUKAN user Google
+        if (!$isGoogleUser) {
+            $rules['email'] = 'required|email|unique:users,email,' . $user->id;
+            $rules['current_password'] = 'nullable|required_with:new_password';
+            $rules['new_password'] = 'nullable|min:8|confirmed';
+        }
+
+        // Jalankan Validasi
+        $request->validate($rules);
+
+        // 3. Update Basic Info
         $user->full_name = $request->full_name;
-        $user->email = $request->email;
 
-        // 3. Handle Avatar Upload
+        // Hanya update email jika bukan user Google
+        if (!$isGoogleUser) {
+            $user->email = $request->email;
+        }
+
+        // 4. Handle Avatar Upload (Sama seperti sebelumnya)
         if ($request->hasFile('avatar')) {
-            // Hapus avatar lama logic... (opsional)
-
-            // Simpan ke Supabase
             $path = $request->file('avatar')->store('profiles', 'supabase');
             $user->avatar_url = $path;
         }
 
-        // 4. Handle Password Update
-        if ($request->filled('current_password')) {
+        // 5. Handle Password Update (Hanya jika bukan user Google)
+        if (!$isGoogleUser && $request->filled('current_password')) {
             if (!Hash::check($request->current_password, $user->password)) {
                 return back()->withErrors(['current_password' => 'Password saat ini salah.']);
             }

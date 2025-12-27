@@ -6,15 +6,20 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Task;
 use App\Models\User;
-use App\Models\Transaction;
 use App\Models\Invoice;
 use Illuminate\Support\Facades\DB;
+use App\Models\StaffPayout;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // 1. Statistik Utama (Overview)
+        Invoice::whereIn('status', ['unpaid', 'pending'])
+            ->whereNotNull('due_date')
+            ->where('due_date', '<', now())
+            ->update(['status' => 'cancelled']);
+
+        // Statistik Utama (Overview)
         $stats = [
             'revenue_month' => Invoice::where('status', 'paid')
                 ->whereMonth('created_at', now()->month)
@@ -25,14 +30,27 @@ class DashboardController extends Controller
             'total_clients' => User::where('role', 'client')->count(),
         ];
 
-        // 2. Project Terbaru (Queue)
+        // Project Terbaru (Queue)
         $recentProjects = Task::with(['user', 'service'])
             ->where('status', 'queue')
             ->orderBy('created_at', 'asc')
             ->take(5)
             ->get();
 
-        // 3. Staff Availability (Realtime Online Status)
+        // Invoice Terbaru (5 Data)
+        $recentInvoices = Invoice::with('user')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        // Pending Staff Payouts (5 Data)
+        $pendingPayouts = StaffPayout::with('user')
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'asc')
+            ->take(5)
+            ->get();
+
+        // Staff Availability (Realtime Online Status)
         $staffMembers = User::where('role', 'staff')
             ->select('users.*')
             // A. Cek Status Online (Subquery ke Sessions)
@@ -58,9 +76,6 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // CATATAN: Loop foreach sebelumnya dihapus karena properti 'last_activity' tidak ada di select.
-        // Kita sudah menggunakan 'is_currently_online' dari subquery di atas.
-
-        return view('admin.dashboard.index', compact('stats', 'recentProjects', 'staffMembers'));
+        return view('admin.dashboard.index', compact('stats', 'recentProjects', 'staffMembers', 'recentInvoices', 'pendingPayouts'));
     }
 }

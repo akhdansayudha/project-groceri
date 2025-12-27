@@ -7,8 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Invoice;
-use App\Models\Tier;        // Pastikan Model Tier diimport
-use App\Models\Transaction; // Pastikan Model Transaction diimport
+use App\Models\Tier;
+use App\Models\Transaction;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InvoiceController extends Controller
 {
@@ -20,18 +21,17 @@ class InvoiceController extends Controller
         // Query Dasar
         $query = Invoice::where('user_id', $user->id);
 
-        // --- TAMBAHAN LOGIC FILTER TANGGAL ---
+        // LOGIC FILTER TANGGAL
         if ($request->has('start_date') && $request->start_date) {
             $query->whereDate('created_at', '>=', $request->start_date);
         }
         if ($request->has('end_date') && $request->end_date) {
             $query->whereDate('created_at', '<=', $request->end_date);
         }
-        // -------------------------------------
 
         $invoices = $query->orderBy('created_at', 'desc')
             ->paginate(10)
-            ->withQueryString(); // Agar parameter filter tetap ada saat ganti halaman
+            ->withQueryString();
 
         // Stats (Tetap sama)
         $stats = [
@@ -46,7 +46,67 @@ class InvoiceController extends Controller
     public function show(Invoice $invoice)
     {
         if ($invoice->user_id !== Auth::id()) abort(403);
-        return view('client.invoices.show', compact('invoice'));
+        if (in_array($invoice->status, ['unpaid', 'pending']) && $invoice->due_date && now()->greaterThan($invoice->due_date)) {
+            $invoice->update(['status' => 'cancelled']);
+        }
+
+        $details = $this->parseInvoiceDetails($invoice);
+
+        return view('client.invoices.show', compact('invoice', 'details'));
+    }
+
+    /**
+     * --- LOGIC 2: FITUR MANUAL CANCEL ---
+     */
+    public function cancel(Invoice $invoice)
+    {
+        if ($invoice->user_id !== Auth::id()) abort(403);
+
+        // Hanya boleh cancel jika status unpaid/pending
+        if (!in_array($invoice->status, ['unpaid', 'pending'])) {
+            return back()->with('error', 'Invoice tidak dapat dibatalkan.');
+        }
+
+        $invoice->update(['status' => 'cancelled']);
+
+        return back()->with('success', 'Invoice berhasil dibatalkan.');
+    }
+
+    /**
+     * Fitur Download PDF
+     */
+    public function downloadPdf(Invoice $invoice)
+    {
+        if ($invoice->user_id !== Auth::id()) abort(403);
+
+        $details = $this->parseInvoiceDetails($invoice);
+        $user = Auth::user();
+
+        $pdf = Pdf::loadView('client.invoices.pdf', compact('invoice', 'details', 'user'));
+        $pdf->setPaper([0, 0, 595.28, 600], 'portrait');
+
+        return $pdf->download('Receipt-Vektora-' . $invoice->invoice_number . '.pdf');
+    }
+
+    /**
+     * Helper: Menghitung Harga Satuan & Qty dari Deskripsi
+     */
+    private function parseInvoiceDetails($invoice)
+    {
+        // Ambil angka dari deskripsi (Misal: "Top Up 50 Toratix")
+        preg_match('/\d+/', $invoice->description, $matches);
+        $qty = isset($matches[0]) ? (int)$matches[0] : 1;
+
+        // Hindari division by zero
+        $qty = $qty > 0 ? $qty : 1;
+
+        $pricePerUnit = $invoice->amount / $qty;
+
+        return [
+            'qty' => $qty,
+            'price_per_unit' => $pricePerUnit,
+            'item_name' => 'Toratix Token (TX)'
+        ];
     }
 
     /**

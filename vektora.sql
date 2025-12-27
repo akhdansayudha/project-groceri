@@ -79,6 +79,13 @@ CREATE TABLE public.notifications (
     CONSTRAINT notifications_batch_id_fkey FOREIGN KEY (batch_id) REFERENCES public.notification_batches (id)
 );
 
+CREATE TABLE public.password_reset_tokens (
+    email character varying NOT NULL,
+    token character varying NOT NULL,
+    created_at timestamp without time zone,
+    CONSTRAINT password_reset_tokens_pkey PRIMARY KEY (email)
+);
+
 CREATE TABLE public.services (
     id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
     name character varying NOT NULL,
@@ -221,6 +228,7 @@ CREATE TABLE public.users (
   bank_name character varying,
   bank_account character varying,
   bank_holder character varying,
+  google_id text UNIQUE,
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 

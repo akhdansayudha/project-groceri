@@ -125,8 +125,31 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Email Address</label>
-                            <input type="email" name="email" value="{{ old('email', $user->email) }}" required
-                                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-black transition-colors font-medium">
+
+                            @if ($user->google_id)
+                                {{-- Tampilan Readonly untuk Google User --}}
+                                <div class="relative">
+                                    <input type="email" value="{{ $user->email }}" readonly
+                                        class="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-gray-500 font-medium cursor-not-allowed focus:outline-none">
+
+                                    {{-- Badge Info --}}
+                                    <div
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-1 bg-white border border-gray-200 rounded-md shadow-sm">
+                                        <svg class="w-3 h-3" viewBox="0 0 24 24">
+                                            <path
+                                                d="M12.0003 20.45c4.64 0 8.05-3.26 8.05-8.15 0-.82-.08-1.42-.2-2.05H12v3.9h4.6c-.2 1.25-1.2 3.3-4.6 3.3-2.8 0-5.1-2.25-5.1-5.05s2.3-5.05 5.1-5.05c1.3 0 2.45.45 3.35 1.3l2.5-2.5c-1.6-1.55-3.7-2.45-5.85-2.45-4.7 0-8.5 3.8-8.5 8.5s3.8 8.5 8.5 8.5z"
+                                                fill="currentColor" />
+                                        </svg>
+                                        <span class="text-[10px] font-bold text-gray-600">Google Linked</span>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-gray-400 mt-1.5 ml-1">Email terhubung dengan akun Google dan
+                                    tidak dapat diubah.</p>
+                            @else
+                                {{-- Tampilan Normal --}}
+                                <input type="email" name="email" value="{{ old('email', $user->email) }}" required
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-black transition-colors font-medium">
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -137,50 +160,79 @@
                         <i data-feather="lock" class="w-5 h-5"></i> Security & Password
                     </h3>
 
-                    <div class="space-y-5">
-                        {{-- Current Password --}}
-                        <div class="relative">
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Current Password</label>
-                            <div class="relative">
-                                <input type="password" name="current_password" id="current_password" placeholder="••••••••"
-                                    class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-black transition-colors font-medium">
-                                <button type="button" onclick="togglePassword('current_password')"
-                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
-                                    <i data-feather="eye" class="w-4 h-4"></i>
-                                </button>
+                    @if ($user->google_id)
+                        {{-- TAMPILAN KHUSUS GOOGLE USER --}}
+                        <div
+                            class="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col items-center text-center">
+                            <div
+                                class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-4 border border-gray-100">
+                                <svg class="w-6 h-6" viewBox="0 0 24 24">
+                                    <path
+                                        d="M12.0003 20.45c4.64 0 8.05-3.26 8.05-8.15 0-.82-.08-1.42-.2-2.05H12v3.9h4.6c-.2 1.25-1.2 3.3-4.6 3.3-2.8 0-5.1-2.25-5.1-5.05s2.3-5.05 5.1-5.05c1.3 0 2.45.45 3.35 1.3l2.5-2.5c-1.6-1.55-3.7-2.45-5.85-2.45-4.7 0-8.5 3.8-8.5 8.5s3.8 8.5 8.5 8.5z"
+                                        fill="currentColor" />
+                                </svg>
                             </div>
-                            <p class="text-[10px] text-gray-400 mt-1.5 ml-1">Kosongkan jika tidak ingin mengubah password.
+                            <h4 class="font-bold text-gray-900 mb-1">Login via Google Aktif</h4>
+                            <p class="text-sm text-gray-500 max-w-sm leading-relaxed mb-4">
+                                Akun Anda diamankan menggunakan autentikasi Google. Anda tidak perlu mengatur password
+                                karena proses login ditangani langsung oleh Google.
                             </p>
+                            <span
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                                <i data-feather="shield" class="w-3 h-3"></i> Secure Access
+                            </span>
                         </div>
+                    @else
+                        {{-- FORM PASSWORD NORMAL (Untuk User Manual) --}}
+                        <div class="space-y-5">
+                            {{-- Current Password --}}
+                            <div class="relative">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Current Password</label>
+                                <div class="relative">
+                                    <input type="password" name="current_password" id="current_password"
+                                        placeholder="••••••••"
+                                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-black transition-colors font-medium">
+                                    <button type="button" onclick="togglePassword('current_password')"
+                                        class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
+                                        <i data-feather="eye" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-gray-400 mt-1.5 ml-1">Kosongkan jika tidak ingin mengubah
+                                    password.</p>
+                            </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {{-- New Password --}}
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">New Password</label>
-                                <div class="relative">
-                                    <input type="password" name="new_password" id="new_password" placeholder="••••••••"
-                                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-black transition-colors font-medium">
-                                    <button type="button" onclick="togglePassword('new_password')"
-                                        class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
-                                        <i data-feather="eye" class="w-4 h-4"></i>
-                                    </button>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {{-- New Password --}}
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">New
+                                        Password</label>
+                                    <div class="relative">
+                                        <input type="password" name="new_password" id="new_password"
+                                            placeholder="••••••••"
+                                            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-black transition-colors font-medium">
+                                        <button type="button" onclick="togglePassword('new_password')"
+                                            class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
+                                            <i data-feather="eye" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                            {{-- Confirm Password --}}
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Confirm Password</label>
-                                <div class="relative">
-                                    <input type="password" name="new_password_confirmation"
-                                        id="new_password_confirmation" placeholder="••••••••"
-                                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-black transition-colors font-medium">
-                                    <button type="button" onclick="togglePassword('new_password_confirmation')"
-                                        class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
-                                        <i data-feather="eye" class="w-4 h-4"></i>
-                                    </button>
+                                {{-- Confirm Password --}}
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Confirm
+                                        Password</label>
+                                    <div class="relative">
+                                        <input type="password" name="new_password_confirmation"
+                                            id="new_password_confirmation" placeholder="••••••••"
+                                            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-black transition-colors font-medium">
+                                        <button type="button" onclick="togglePassword('new_password_confirmation')"
+                                            class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
+                                            <i data-feather="eye" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
 
                 {{-- ACTION BUTTONS --}}

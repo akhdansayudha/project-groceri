@@ -8,10 +8,10 @@
         </div>
     </div>
 
-    {{-- STATS GRID (BENTO STYLE) --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 fade-in">
+    {{-- STATS GRID (BENTO STYLE - UPDATED TO 4 COLS) --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 fade-in">
 
-        {{-- Card 1: Total Revenue (Hero) --}}
+        {{-- Card 1: Total Revenue --}}
         <div class="bg-black text-white p-6 rounded-3xl relative overflow-hidden group shadow-xl shadow-black/10">
             <div
                 class="absolute right-0 top-0 w-32 h-32 bg-gray-800 rounded-full blur-3xl opacity-20 -mr-10 -mt-10 transition-all group-hover:scale-110">
@@ -24,41 +24,58 @@
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Revenue</p>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-bold tracking-tight">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</h3>
+                    <h3 class="text-2xl font-bold tracking-tight">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</h3>
                     <p class="text-[10px] text-gray-500 mt-1">Accumulated from paid invoices</p>
                 </div>
             </div>
         </div>
 
-        {{-- Card 2: Unpaid Amount --}}
+        {{-- Card 2: Outstanding --}}
         <div class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
             <div class="flex flex-col h-full justify-between">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="p-2 bg-red-50 text-red-600 rounded-xl">
                         <i data-feather="alert-circle" class="w-5 h-5"></i>
                     </div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Outstanding Amount</p>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Outstanding</p>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-bold text-gray-900">Rp {{ number_format($unpaidAmount, 0, ',', '.') }}</h3>
-                    <p class="text-[10px] text-gray-400 mt-1">Pending payments from clients</p>
+                    <h3 class="text-2xl font-bold text-gray-900">Rp {{ number_format($unpaidAmount, 0, ',', '.') }}</h3>
+                    <p class="text-[10px] text-gray-400 mt-1">Pending payments</p>
                 </div>
             </div>
         </div>
 
-        {{-- Card 3: Unpaid Count --}}
+        {{-- Card 3: Pending Count --}}
         <div class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
             <div class="flex flex-col h-full justify-between">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="p-2 bg-yellow-50 text-yellow-600 rounded-xl">
                         <i data-feather="clock" class="w-5 h-5"></i>
                     </div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending Invoices</p>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending</p>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-bold text-gray-900">{{ $countUnpaid }} <span
+                    <h3 class="text-2xl font-bold text-gray-900">{{ $countUnpaid }} <span
                             class="text-sm font-medium text-gray-400">Bills</span></h3>
-                    <p class="text-[10px] text-gray-400 mt-1">Waiting for payment confirmation</p>
+                    <p class="text-[10px] text-gray-400 mt-1">Waiting confirmation</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Card 4: Cancelled Count (NEW) --}}
+        <div class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+            <div class="flex flex-col h-full justify-between">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2 bg-gray-100 text-gray-600 rounded-xl">
+                        <i data-feather="x-circle" class="w-5 h-5"></i>
+                    </div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Cancelled</p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-900">{{ $countCancelled }} <span
+                            class="text-sm font-medium text-gray-400">Bills</span></h3>
+                    <p class="text-[10px] text-gray-400 mt-1">Expired or voided</p>
                 </div>
             </div>
         </div>
@@ -68,19 +85,16 @@
     <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden fade-in flex flex-col">
         {{-- Toolbar --}}
         <div class="p-5 border-b border-gray-100 flex flex-col md:flex-row gap-4 justify-between items-center bg-white">
-            <div class="flex gap-2 p-1 bg-gray-50 rounded-xl border border-gray-100">
-                <a href="{{ route('admin.invoices.index') }}"
-                    class="px-4 py-2 rounded-lg text-xs font-bold transition-all {{ !request('status') ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black' }}">
-                    All
-                </a>
-                <a href="{{ route('admin.invoices.index', ['status' => 'paid']) }}"
-                    class="px-4 py-2 rounded-lg text-xs font-bold transition-all {{ request('status') == 'paid' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-green-600' }}">
-                    Paid
-                </a>
-                <a href="{{ route('admin.invoices.index', ['status' => 'unpaid']) }}"
-                    class="px-4 py-2 rounded-lg text-xs font-bold transition-all {{ request('status') == 'unpaid' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-red-600' }}">
-                    Unpaid
-                </a>
+            <div class="flex gap-2 p-1 bg-gray-50 rounded-xl border border-gray-100 overflow-x-auto">
+                @foreach (['all' => 'All', 'paid' => 'Paid', 'unpaid' => 'Unpaid', 'cancelled' => 'Cancelled'] as $key => $label)
+                    <a href="{{ route('admin.invoices.index', ['status' => $key == 'all' ? null : $key]) }}"
+                        class="px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap
+                        {{ request('status') == $key || (!request('status') && $key == 'all')
+                            ? 'bg-black text-white shadow-md'
+                            : 'text-gray-500 hover:text-black hover:bg-gray-100' }}">
+                        {{ $label }}
+                    </a>
+                @endforeach
             </div>
 
             <form action="{{ route('admin.invoices.index') }}" method="GET" class="relative group w-full md:w-72">
@@ -101,7 +115,7 @@
                         <th class="px-6 py-4 tracking-wider">Invoice #</th>
                         <th class="px-6 py-4 tracking-wider">Client</th>
                         <th class="px-6 py-4 tracking-wider">Amount</th>
-                        <th class="px-6 py-4 tracking-wider">Issued Date</th>
+                        <th class="px-6 py-4 tracking-wider">Date</th>
                         <th class="px-6 py-4 tracking-wider">Status</th>
                         <th class="px-6 py-4 tracking-wider text-right">Action</th>
                     </tr>
@@ -116,7 +130,7 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="w-8 h-8 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-                                        <img src="{{ $inv->user->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($inv->user->full_name) . '&background=random&color=fff' }}"
+                                        <img src="{{ $inv->user->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($inv->user->full_name) }}"
                                             class="w-full h-full object-cover">
                                     </div>
                                     <div>
@@ -131,13 +145,18 @@
                                     {{ number_format($inv->amount, 0, ',', '.') }}</span>
                             </td>
                             <td class="px-6 py-4 text-xs font-medium text-gray-500">
-                                {{ \Carbon\Carbon::parse($inv->created_at)->format('d M Y') }}
+                                {{ $inv->created_at->format('d M Y') }}
                             </td>
                             <td class="px-6 py-4">
                                 @if ($inv->status == 'paid')
                                     <span
                                         class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-green-50 text-green-700 border border-green-100">
                                         <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div> Paid
+                                    </span>
+                                @elseif ($inv->status == 'cancelled')
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-gray-400"></div> Cancelled
                                     </span>
                                 @else
                                     <span

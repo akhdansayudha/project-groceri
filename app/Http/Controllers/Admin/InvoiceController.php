@@ -14,12 +14,17 @@ class InvoiceController extends Controller
 {
     public function index(Request $request)
     {
+        Invoice::whereIn('status', ['unpaid', 'pending'])
+            ->whereNotNull('due_date')
+            ->where('due_date', '<', now())
+            ->update(['status' => 'cancelled']);
+
         $search = $request->query('search');
         $status = $request->query('status');
 
         $query = Invoice::with('user')->orderBy('created_at', 'desc');
 
-        // Filter Search (Invoice Number / Client Name)
+        // Filter Search
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('invoice_number', 'ilike', "%{$search}%")
@@ -36,21 +41,40 @@ class InvoiceController extends Controller
 
         $invoices = $query->paginate(10)->withQueryString();
 
-        // Statistik Header
+        // Statistik Header (Updated)
         $totalRevenue = Invoice::where('status', 'paid')->sum('amount');
-        $unpaidAmount = Invoice::where('status', 'unpaid')->sum('amount');
-        $countUnpaid = Invoice::where('status', 'unpaid')->count();
+        $unpaidAmount = Invoice::whereIn('status', ['unpaid', 'pending'])->sum('amount');
+        $countUnpaid = Invoice::whereIn('status', ['unpaid', 'pending'])->count();
+        $countCancelled = Invoice::where('status', 'cancelled')->count(); // <-- NEW
 
-        return view('admin.invoices.index', compact('invoices', 'totalRevenue', 'unpaidAmount', 'countUnpaid'));
+        return view('admin.invoices.index', compact('invoices', 'totalRevenue', 'unpaidAmount', 'countUnpaid', 'countCancelled'));
     }
 
     public function show($id)
     {
         $invoice = Invoice::with(['user', 'user.wallet'])->findOrFail($id);
+
+        // --- LOGIC AUTO CANCEL JIKA EXPIRED (Sama seperti Client) ---
+        if (in_array($invoice->status, ['unpaid', 'pending']) && $invoice->due_date && now()->greaterThan($invoice->due_date)) {
+            $invoice->update(['status' => 'cancelled']);
+        }
+
         return view('admin.invoices.show', compact('invoice'));
     }
 
-    // Fitur Manual Confirm Payment
+    public function cancel($id)
+    {
+        $invoice = Invoice::findOrFail($id);
+
+        if (!in_array($invoice->status, ['unpaid', 'pending'])) {
+            return back()->with('error', 'Invoice tidak dapat dibatalkan (Status: ' . $invoice->status . ').');
+        }
+
+        $invoice->update(['status' => 'cancelled']);
+
+        return back()->with('success', 'Invoice berhasil dibatalkan.');
+    }
+
     public function markAsPaid($id)
     {
         $invoice = Invoice::findOrFail($id);
@@ -67,54 +91,39 @@ class InvoiceController extends Controller
                 'payment_method' => 'manual_admin',
             ]);
 
-            // 2. LOGIC PENENTUAN JUMLAH TOKEN (DYNAMIC PRICING)
+            // 2. Logic Token (Sederhana)
             $tokenAmount = 0;
-
-            // Ambil semua data harga, urutkan dari qty terkecil (eceran) ke terbesar (grosir)
-            // Pastikan Anda sudah membuat Model 'TokenPrice' yang terhubung ke tabel 'token_prices'
             $prices = DB::table('token_prices')->orderBy('min_qty', 'asc')->get();
 
-            // A. Cek Logika Tier (Diskon Grosir)
-            // Kita cek apakah Amount Invoice cocok dengan hasil perkalian (Qty * Harga Tier)
             foreach ($prices as $tier) {
                 if ($tier->price_per_token > 0) {
                     $calculatedQty = $invoice->amount / $tier->price_per_token;
-
-                    // Cek apakah hasilnya bilangan bulat (artinya cocok dengan harga tier ini)
-                    // Menggunakan epsilon 0.01 untuk toleransi koma floating point
                     if (abs($calculatedQty - round($calculatedQty)) < 0.01) {
                         $rounded = round($calculatedQty);
-                        // Cek apakah qty masuk dalam range tier tersebut (min_qty s/d max_qty)
                         if ($rounded >= $tier->min_qty && $rounded <= $tier->max_qty) {
                             $tokenAmount = $rounded;
-                            break; // Ketemu! Keluar dari loop.
+                            break;
                         }
                     }
                 }
             }
 
-            // B. Fallback (Jika tidak cocok dengan tier manapun)
-            // Misal admin buat invoice manual Rp 123.456 yang tidak pas dengan harga paket.
-            // Maka kita bagi dengan harga ECERAN (Tier 1 / termurah) sebagai default.
             if ($tokenAmount == 0 && $prices->isNotEmpty()) {
-                $basePrice = $prices->first()->price_per_token; // Ambil harga tier pertama
+                $basePrice = $prices->first()->price_per_token;
                 if ($basePrice > 0) {
                     $tokenAmount = floor($invoice->amount / $basePrice);
                 }
             }
 
-            // 3. Eksekusi Top Up ke Wallet
+            // 3. Top Up Wallet
             if ($tokenAmount > 0) {
                 $wallet = Wallet::firstOrCreate(['user_id' => $invoice->user_id]);
-
                 $wallet->increment('balance', $tokenAmount);
                 $wallet->increment('total_purchased', $tokenAmount);
 
-                // Catat Transaksi
                 Transaction::create([
-                    'id' => \Illuminate\Support\Str::uuid(),
                     'wallet_id' => $wallet->id,
-                    'type' => 'topup', // Sesuai database (lowercase)
+                    'type' => 'topup',
                     'amount' => $tokenAmount,
                     'description' => 'Top Up Success via Invoice #' . $invoice->invoice_number,
                     'reference_id' => $invoice->id,

@@ -9,48 +9,119 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\Service;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AnalyticsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // 1. DATA REVENUE (6 Bulan Terakhir)
-        // Format label: ['Jan', 'Feb', 'Mar'...]
-        // Format data: [1000000, 2500000, ...]
-        $revenueData = Invoice::select(
-            DB::raw('SUM(amount) as total'),
-            DB::raw("TO_CHAR(created_at, 'Mon') as month_name"),
-            DB::raw("EXTRACT(MONTH FROM created_at) as month_num")
+        // 1. SETUP DATE RANGE
+        if ($request->has('date_range') && !empty($request->date_range)) {
+            $dates = explode(' to ', $request->date_range);
+            $startDate = Carbon::parse($dates[0])->startOfDay();
+            $endDate = isset($dates[1]) ? Carbon::parse($dates[1])->endOfDay() : $startDate->endOfDay();
+        } else {
+            $startDate = now()->subMonths(6)->startOfDay();
+            $endDate = now()->endOfDay();
+        }
+
+        $selectedRange = $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d');
+        $diffInDays = $startDate->diffInDays($endDate);
+
+        // 2. DATA REVENUE (DYNAMIC GROUPING)
+        // Ambil data mentah harian dulu
+        $rawRevenue = Invoice::select(
+            DB::raw("DATE(created_at) as date"),
+            DB::raw('SUM(amount) as total')
         )
             ->where('status', 'paid')
-            ->where('created_at', '>=', now()->subMonths(6))
-            ->groupBy('month_name', 'month_num')
-            ->orderBy('month_num')
-            ->get();
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->pluck('total', 'date')
+            ->toArray();
+
+        $chartDates = [];
+        $chartValues = [];
+
+        // --- LOGIC GROUPING ---
+        if ($diffInDays <= 60) {
+            // MODE: DAILY
+            $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+            foreach ($period as $date) {
+                $d = $date->format('Y-m-d');
+                $chartDates[] = $date->format('d M');
+                $chartValues[] = $rawRevenue[$d] ?? 0;
+            }
+        } elseif ($diffInDays > 60 && $diffInDays <= 120) {
+            // MODE: PER 3 DAYS
+            $currentDate = $startDate->copy();
+            while ($currentDate <= $endDate) {
+                $chunkEnd = $currentDate->copy()->addDays(2);
+                if ($chunkEnd > $endDate) $chunkEnd = $endDate->copy();
+
+                $sum = 0;
+                // Loop internal untuk sum 3 hari
+                $tempDate = $currentDate->copy();
+                while ($tempDate <= $chunkEnd) {
+                    $sum += $rawRevenue[$tempDate->format('Y-m-d')] ?? 0;
+                    $tempDate->addDay();
+                }
+
+                $chartDates[] = $currentDate->format('d M') . ' - ' . $chunkEnd->format('d M');
+                $chartValues[] = $sum;
+
+                $currentDate->addDays(3);
+            }
+        } else {
+            // MODE: WEEKLY (> 120 Hari / 4 Bulan)
+            $currentDate = $startDate->copy();
+            while ($currentDate <= $endDate) {
+                $chunkEnd = $currentDate->copy()->addDays(6);
+                if ($chunkEnd > $endDate) $chunkEnd = $endDate->copy();
+
+                $sum = 0;
+                $tempDate = $currentDate->copy();
+                while ($tempDate <= $chunkEnd) {
+                    $sum += $rawRevenue[$tempDate->format('Y-m-d')] ?? 0;
+                    $tempDate->addDay();
+                }
+
+                $chartDates[] = $currentDate->format('d M') . ' - ' . $chunkEnd->format('d M');
+                $chartValues[] = $sum;
+
+                $currentDate->addDays(7);
+            }
+        }
 
         $chartRevenue = [
-            'labels' => $revenueData->pluck('month_name')->toArray(),
-            'data' => $revenueData->pluck('total')->toArray()
+            'labels' => $chartDates,
+            'data' => $chartValues
         ];
 
-        // 2. DATA LAYANAN TERLARIS (Top 5 Services)
-        $topServices = Service::withCount('tasks')
-            ->orderBy('tasks_count', 'desc')
-            ->take(5)
+        // 3. STATISTIK RINGKAS
+        $summary = [
+            'total_revenue' => Invoice::where('status', 'paid')->whereBetween('created_at', [$startDate, $endDate])->sum('amount'),
+            'total_projects' => Task::whereBetween('created_at', [$startDate, $endDate])->count(),
+            'avg_deal' => Invoice::where('status', 'paid')->whereBetween('created_at', [$startDate, $endDate])->avg('amount') ?? 0,
+        ];
+
+        // 4. TOP SERVICES
+        $topServices = Service::withCount(['tasks' => function ($q) use ($startDate, $endDate) {
+            $q->whereBetween('created_at', [$startDate, $endDate]);
+        }])
+            ->orderByDesc('tasks_count')
+            ->take(5) // Limit 5 untuk tabel
             ->get();
 
-        $chartServices = [
-            'labels' => $topServices->pluck('name')->toArray(),
-            'data' => $topServices->pluck('tasks_count')->toArray()
-        ];
-
-        // 3. PROJECT STATUS DISTRIBUTION
-        $statusStats = Task::select('status', DB::raw('count(*) as total'))
+        // 5. PROJECT STATUS DISTRIBUTION
+        $statusStats = Task::whereBetween('created_at', [$startDate, $endDate])
+            ->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status')
             ->toArray();
 
-        // Mapping status agar sesuai urutan warna di chart
         $chartStatus = [
             $statusStats['active'] ?? 0,
             $statusStats['queue'] ?? 0,
@@ -58,33 +129,94 @@ class AnalyticsController extends Controller
             $statusStats['revision'] ?? 0
         ];
 
-        // 4. TOP SPENDER CLIENTS
-        // Kita hitung manual user yang punya total payment invoice tertinggi
+        // 6. TOP SPENDER CLIENTS
         $topClients = User::where('role', 'client')
-            ->with(['wallet']) // Asumsi wallet menyimpan total pengeluaran/topup
+            ->with(['wallet'])
             ->get()
-            ->sortByDesc(function ($user) {
-                // Logic sederhana: user dengan balance invoice paid terbanyak
-                // Karena belum ada relasi user->invoices yg strict, kita ambil sample dummy atau query join
-                // Disini kita pakai query Invoice join User untuk akurasi
-                return Invoice::where('user_id', $user->id)->where('status', 'paid')->sum('amount');
+            ->map(function ($user) use ($startDate, $endDate) {
+                $user->total_spent = Invoice::where('user_id', $user->id)
+                    ->where('status', 'paid')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->sum('amount');
+                return $user;
             })
-            ->take(5);
+            ->sortByDesc('total_spent')
+            ->values()
+            ->take(10);
 
-        // STATISTIK RINGKAS
-        $summary = [
-            'total_revenue' => Invoice::where('status', 'paid')->sum('amount'),
-            'total_projects' => Task::count(),
-            'avg_deal' => Invoice::where('status', 'paid')->avg('amount') ?? 0,
-            'growth' => 12.5 // Hardcoded dummy growth %, nanti bisa dihitung real vs bulan lalu
-        ];
+        // 7. TOP STAFF PERFORMANCE
+        $topStaff = User::where('role', 'staff')
+            ->get()
+            ->map(function ($user) use ($startDate, $endDate) {
+                $user->earned_tokens = Task::where('assignee_id', $user->id)
+                    ->where('status', 'completed')
+                    ->whereBetween('completed_at', [$startDate, $endDate])
+                    ->sum('toratix_locked');
+
+                $user->completed_count = Task::where('assignee_id', $user->id)
+                    ->where('status', 'completed')
+                    ->whereBetween('completed_at', [$startDate, $endDate])
+                    ->count();
+                return $user;
+            })
+            ->sortByDesc('earned_tokens')
+            ->values()
+            ->take(10);
 
         return view('admin.analytics.index', compact(
             'chartRevenue',
-            'chartServices',
             'chartStatus',
             'topClients',
-            'summary'
+            'summary',
+            'selectedRange',
+            'topStaff',
+            'topServices'
         ));
+    }
+
+    /**
+     * Export PDF Report
+     */
+    public function exportPdf(Request $request)
+    {
+        if ($request->has('date_range') && !empty($request->date_range)) {
+            $dates = explode(' to ', $request->date_range);
+            $startDate = Carbon::parse($dates[0])->startOfDay();
+            $endDate = isset($dates[1]) ? Carbon::parse($dates[1])->endOfDay() : $startDate->endOfDay();
+        } else {
+            $startDate = now()->subMonths(6)->startOfDay();
+            $endDate = now()->endOfDay();
+        }
+
+        // --- RE-USE LOGIC (Simplified for PDF) ---
+        $summary = [
+            'total_revenue' => Invoice::where('status', 'paid')->whereBetween('created_at', [$startDate, $endDate])->sum('amount'),
+            'total_projects' => Task::whereBetween('created_at', [$startDate, $endDate])->count(),
+            'avg_deal' => Invoice::where('status', 'paid')->whereBetween('created_at', [$startDate, $endDate])->avg('amount') ?? 0,
+        ];
+
+        // Top Services Table
+        $topServices = Service::withCount(['tasks' => function ($q) use ($startDate, $endDate) {
+            $q->whereBetween('created_at', [$startDate, $endDate]);
+        }])->orderByDesc('tasks_count')->take(10)->get();
+
+        // Top Staff
+        $topStaff = User::where('role', 'staff')->get()->map(function ($user) use ($startDate, $endDate) {
+            $user->earned_tokens = Task::where('assignee_id', $user->id)
+                ->where('status', 'completed')->whereBetween('completed_at', [$startDate, $endDate])->sum('toratix_locked');
+            $user->completed_count = Task::where('assignee_id', $user->id)
+                ->where('status', 'completed')->whereBetween('completed_at', [$startDate, $endDate])->count();
+            return $user;
+        })->sortByDesc('earned_tokens')->take(10);
+
+        // Top Clients
+        $topClients = User::where('role', 'client')->get()->map(function ($user) use ($startDate, $endDate) {
+            $user->total_spent = Invoice::where('user_id', $user->id)
+                ->where('status', 'paid')->whereBetween('created_at', [$startDate, $endDate])->sum('amount');
+            return $user;
+        })->sortByDesc('total_spent')->take(10);
+
+        $pdf = Pdf::loadView('admin.analytics.pdf', compact('summary', 'topStaff', 'topClients', 'topServices', 'startDate', 'endDate'));
+        return $pdf->download('Vektora-Report-' . now()->format('Ymd') . '.pdf');
     }
 }

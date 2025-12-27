@@ -11,7 +11,7 @@
 
         {{-- Credits --}}
         <p class="text-xs text-gray-400">
-            Dibuat oleh <span class="font-bold text-gray-600">Kelompok 3 Komputasi Awan IS-06-03</span>
+            Dibuat oleh <span class="font-bold text-gray-600">Vektora Team</span>
         </p>
     </div>
 </footer>

@@ -74,7 +74,7 @@ class WalletController extends Controller
             'status' => 'unpaid',
             'description' => "Top Up {$amount} Toratix",
             'payment_method' => 'midtrans', // Ubah jadi midtrans
-            'due_date' => now()->addDay(),
+            'due_date' => now()->addHour(),
         ]);
 
         // 3. Konfigurasi Midtrans

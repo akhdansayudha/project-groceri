@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -28,6 +30,17 @@ class AuthController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user) {
+            // Jika user ada, cek apakah dia user Google (punya google_id)
+            if (!empty($user->google_id)) {
+                return back()->withErrors([
+                    'email' => 'Akun ini terdaftar menggunakan Google. Silakan klik tombol "Sign in with Google".',
+                ])->onlyInput('email');
+            }
+        }
 
         $remember = $request->has('remember');
 
@@ -60,6 +73,18 @@ class AuthController extends Controller
             'role' => 'client', // Default role
             'avatar_url' => 'https://ui-avatars.com/api/?name=' . urlencode($request->name),
         ]);
+
+        try {
+            $data = ['user' => $user];
+
+            Mail::send('auth.emails.welcome', $data, function ($message) use ($user) {
+                $message->to($user->email);
+                $message->subject('Welcome to Vektora - Your Creative Journey Starts Here');
+            });
+        } catch (\Exception $e) {
+            // Mencatat error ke file log (storage/logs/laravel.log)
+            Log::error("Gagal mengirim Welcome Email ke {$user->email}. Error: " . $e->getMessage());
+        }
 
         Auth::login($user);
 

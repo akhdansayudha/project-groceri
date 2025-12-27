@@ -24,6 +24,7 @@ class User extends Authenticatable
         'bank_name',
         'bank_account',
         'bank_holder',
+        'google_id',
     ];
 
     protected $hidden = [
