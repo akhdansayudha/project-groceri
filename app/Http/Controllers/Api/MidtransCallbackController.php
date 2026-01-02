@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Invoice;
-use App\Models\Transaction; // Menggunakan model Transaction dari vektora.sql
+use App\Models\Transaction;
 use App\Models\Wallet;
 use Illuminate\Support\Facades\DB;
 use Midtrans\Config;
@@ -58,7 +58,7 @@ class MidtransCallbackController extends Controller
         } else if ($transaction == 'pending') {
             $invoice->update(['status' => 'pending']);
         } else if ($transaction == 'deny' || $transaction == 'expire' || $transaction == 'cancel') {
-            $invoice->update(['status' => 'failed']);
+            $invoice->update(['status' => 'canceled']);
         }
 
         return response(['message' => 'Notification processed'], 200);
@@ -75,7 +75,6 @@ class MidtransCallbackController extends Controller
             ]);
 
             // 2. Parse Jumlah Token dari Deskripsi Invoice
-            // Format deskripsi: "Top Up 100 Toratix..."
             preg_match('/Top Up (\d+) Toratix/', $invoice->description, $matches);
             $tokenAmount = isset($matches[1]) ? (int)$matches[1] : 0;
 

@@ -353,48 +353,125 @@
         </div>
     </section>
 
-    {{-- SECTION ID CONTACT US (Ditambahkan ID untuk target scroll desktop) --}}
-    <section id="contact-us" class="py-32 px-6 bg-white rounded-t-[4rem]">
+    {{-- SECTION ID TEAM & CTA (Menggantikan Contact Us lama) --}}
+    <section id="our-team" class="py-32 px-6 bg-white rounded-t-[4rem]">
         <div class="max-w-7xl mx-auto">
-            <div class="mb-12 flex items-center gap-3">
-                <span class="w-2 h-2 bg-black rounded-full"></span>
-                <h3 class="text-sm font-bold uppercase tracking-widest">We're explorers</h3>
+
+            {{-- HEADER TEAM --}}
+            <div class="mb-20 flex flex-col md:flex-row md:items-end justify-between gap-8">
+                <div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="w-2 h-2 bg-black rounded-full"></span>
+                        <h3 class="text-sm font-bold uppercase tracking-widest">Our Team</h3>
+                    </div>
+                    <h2 class="reveal text-5xl md:text-7xl font-bold tracking-tight leading-[1]">
+                        The minds behind <br> the magic.
+                    </h2>
+                </div>
+                <p class="reveal text-gray-500 max-w-md text-lg leading-relaxed mb-2">
+                    A collective of thinkers, dreamers, and doers committed to crafting digital excellence.
+                </p>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-20">
-                <div>
-                    <h2 class="reveal text-6xl md:text-8xl font-bold mb-10 leading-none tracking-tighter">Ready to take
-                        <br> next step <br> with us?</h2>
+            {{-- GRID TEAM MEMBERS --}}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-16 mb-32">
+                @php
+                    $teamMembers = [
+                        [
+                            'name' => 'Muhammad Naufal Fahrezy',
+                            'role' => 'Founder & Creative Director',
+                            'img' =>
+                                'https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/6txvaf6txvaf6txv.png',
+                            'linkedin' => 'https://www.linkedin.com/in/muhammad-naufal-fahrezy',
+                        ],
+                        [
+                            'name' => 'Akhdan Sayudha Laksmana',
+                            'role' => 'Head of Technology',
+                            'img' =>
+                                'https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/6txvaf6txvaf6txv.png',
+                            'linkedin' => 'https://www.linkedin.com/in/akhdan-sayudha-laksmana',
+                        ],
+                        [
+                            'name' => 'Wahyudi Tri Susanto',
+                            'role' => 'Lead Product Designer',
+                            'img' =>
+                                'https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/6txvaf6txvaf6txv.png',
+                            'linkedin' => 'https://www.linkedin.com/in/wahyudi-tri-susanto',
+                        ],
+                    ];
+                @endphp
+
+                @foreach ($teamMembers as $member)
+                    <div class="reveal group cursor-default"> {{-- cursor-pointer diganti default agar tidak bingung --}}
+
+                        {{-- Image Container --}}
+                        <div class="relative overflow-hidden rounded-[2.5rem] mb-8 aspect-[4/5] bg-gray-100">
+                            <img src="{{ $member['img'] }}" alt="{{ $member['name'] }}"
+                                class="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-110 grayscale group-hover:grayscale-0">
+
+                            {{-- Social Overlay --}}
+                            <div
+                                class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
+
+                                {{-- BUTTON LINKEDIN (Ubah DIV jadi A) --}}
+                                <a href="{{ $member['linkedin'] }}" target="_blank" rel="noopener noreferrer"
+                                    class="bg-white/90 backdrop-blur rounded-full px-6 py-3 transform translate-y-10 group-hover:translate-y-0 transition-all duration-500 hover:bg-black hover:text-white flex items-center gap-2 shadow-lg">
+                                    <span class="text-sm font-bold">Connect LinkedIn</span>
+                                    <i data-feather="linkedin" class="w-4 h-4"></i>
+                                </a>
+
+                            </div>
+                        </div>
+
+                        {{-- Info --}}
+                        <div class="flex flex-col">
+                            <h4 class="text-2xl font-bold text-black group-hover:text-blue-600 transition-colors">
+                                {{ $member['name'] }}
+                            </h4>
+                            <span class="text-gray-500 font-medium mt-1">{{ $member['role'] }}</span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- CTA SECTION (Collaboration Invite) --}}
+            <div
+                class="reveal relative overflow-hidden bg-[#111] rounded-[3rem] px-8 py-24 md:p-24 text-center group hover-target">
+
+                {{-- Decorative Blurred Gradients --}}
+                <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                     <div
-                        class="inline-flex px-8 py-4 border rounded-full text-gray-500 hover:text-black hover:border-black transition-colors hover-target cursor-pointer items-center gap-2">
-                        Contact us <i data-feather="arrow-down-right" class="w-4 h-4"></i>
+                        class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-600/20 blur-[100px] rounded-full mix-blend-screen">
+                    </div>
+                    <div
+                        class="absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] bg-purple-600/20 blur-[100px] rounded-full mix-blend-screen">
                     </div>
                 </div>
 
-                <div class="bg-white">
-                    <h3 class="text-4xl font-bold mb-10">Let's make an impact</h3>
-                    <form class="space-y-10">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                            <div class="group relative">
-                                <input type="text" placeholder=" "
-                                    class="peer w-full border-b border-gray-200 py-3 outline-none focus:border-black transition-colors bg-transparent pt-4">
-                                <label
-                                    class="absolute left-0 top-0 text-xs font-bold uppercase text-gray-400 transition-all peer-focus:text-black">Name</label>
-                            </div>
-                            <div class="group relative">
-                                <input type="text" placeholder=" "
-                                    class="peer w-full border-b border-gray-200 py-3 outline-none focus:border-black transition-colors bg-transparent pt-4">
-                                <label
-                                    class="absolute left-0 top-0 text-xs font-bold uppercase text-gray-400 transition-all peer-focus:text-black">Company</label>
-                            </div>
-                        </div>
-                        <button
-                            class="w-full py-5 bg-black text-white rounded-full font-bold text-lg btn-invert btn-black hover-target mt-8">
-                            Submit Request
-                        </button>
-                    </form>
+                <div class="relative z-10 max-w-4xl mx-auto">
+                    <h2 class="text-5xl md:text-8xl font-bold text-white mb-8 tracking-tighter leading-none">
+                        Have an idea? <br>
+                        <span class="text-gray-500 group-hover:text-white transition-colors duration-500">Let's build
+                            it.</span>
+                    </h2>
+
+                    <p class="text-gray-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
+                        Join hundreds of visionary brands that have transformed their digital presence with Vektora.
+                    </p>
+
+                    <a href="{{ route('login') }}"
+                        class="inline-flex items-center gap-3 px-10 py-5 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-transform duration-300 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+                        Start Your Project
+                        <i data-feather="arrow-right" class="w-5 h-5"></i>
+                    </a>
+
+                    <div class="mt-8">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Client Registration
+                            Open</span>
+                    </div>
                 </div>
             </div>
+
         </div>
     </section>
 

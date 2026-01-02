@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\PriceController;
 
 // Client Controllers
 use App\Http\Controllers\Client\DashboardController;
@@ -63,6 +64,7 @@ Route::controller(GoogleAuthController::class)->group(function () {
     Route::get('auth/google/callback', 'callback')->name('google.callback');
 });
 
+Route::get('/pricing', [PriceController::class, 'index'])->name('pricing.index');
 
 /*
 |--------------------------------------------------------------------------
