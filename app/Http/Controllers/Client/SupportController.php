@@ -4,12 +4,17 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;     // Import untuk HTTP Request
+use Illuminate\Support\Facades\Log;      // Import untuk Logging
+use Illuminate\Support\Facades\Storage;  // Import untuk Storage
 
 class SupportController extends Controller
 {
+    /**
+     * Halaman Utama Help Center (FAQ Statis)
+     */
     public function index()
     {
-        // Data FAQ Lengkap
         $faqs = [
             'Membership & Tiers' => [
                 [
@@ -65,5 +70,101 @@ class SupportController extends Controller
         ];
 
         return view('client.support.index', compact('faqs'));
+    }
+
+    /**
+     * MENAMPILKAN HALAMAN INTERFACE CHAT AI
+     */
+    public function showAiChat()
+    {
+        return view('client.support.chat-ai');
+    }
+
+    /**
+     * MEMPROSES CHAT DENGAN AI (GOOGLE GEMINI API)
+     */
+    public function chatAi(Request $request)
+    {
+        // 1. Validasi Input
+        $request->validate([
+            'message' => 'required|string|max:1000',
+        ]);
+
+        $userQuestion = $request->message;
+        $apiKey = env('GEMINI_API_KEY');
+
+        // Cek API Key
+        if (!$apiKey) {
+            return response()->json(['status' => 'error', 'message' => 'Server Error: API Key AI belum dikonfigurasi.'], 500);
+        }
+
+        // 2. Ambil Knowledge Base dari File
+        $fileName = 'vektora_knowledge.txt';
+
+        // Kita gunakan Storage disk 'local' yang mengarah ke folder /storage/app/
+        if (Storage::disk('local')->exists($fileName)) {
+            $contextData = Storage::disk('local')->get($fileName);
+        } else {
+            // Jika file TIDAK ditemukan: Log Error tapi jangan crash
+            Log::error("Gemini Error: File {$fileName} tidak ditemukan di storage/app/. Pastikan file tersebut sudah dibuat secara manual.");
+
+            // Fallback context agar AI tetap bisa merespon sopan
+            $contextData = "Database pengetahuan Vektora sedang tidak tersedia. Harap arahkan user untuk menghubungi Admin Support via WhatsApp jika ada pertanyaan mendesak.";
+        }
+
+        // 3. Susun Prompt
+        $prompt = "
+            Anda adalah 'Vektora AI Assistant' (Vektorai).
+            Jawab pertanyaan user HANYA berdasarkan informasi berikut:
+            
+            --- KNOWLEDGE BASE START ---
+            $contextData
+            --- KNOWLEDGE BASE END ---
+            
+            ATURAN:
+            1. Jika jawaban tidak ada di Knowledge Base, katakan jujur: 'Maaf, saya belum memiliki informasi tersebut. Silakan hubungi Admin via WhatsApp.'
+            2. Gunakan bahasa Indonesia yang ramah (Sapa dengan 'Kak').
+            
+            PERTANYAAN USER: $userQuestion
+        ";
+
+        // 4. MODEL AI (Gemini 2.5 Flash)
+        $modelName = 'gemini-2.5-flash';
+
+        try {
+            // Kirim Request (withoutVerifying untuk Localhost SSL Fix)
+            $response = Http::withoutVerifying()
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$modelName}:generateContent?key={$apiKey}", [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $prompt]
+                            ]
+                        ]
+                    ]
+                ]);
+
+            if ($response->failed()) {
+                Log::error("Gemini API Error: " . $response->body());
+                return response()->json(['status' => 'error', 'message' => 'Gagal menghubungi Vektorai (API Error).'], 500);
+            }
+
+            $json = $response->json();
+
+            if (isset($json['candidates'][0]['content']['parts'][0]['text'])) {
+                $botReply = $json['candidates'][0]['content']['parts'][0]['text'];
+                return response()->json([
+                    'status' => 'success',
+                    'reply' => nl2br(e($botReply))
+                ]);
+            } else {
+                return response()->json(['status' => 'error', 'message' => 'Vektorai tidak dapat menjawab saat ini.'], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error("Chat AI Exception: " . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan sistem internal.'], 500);
+        }
     }
 }

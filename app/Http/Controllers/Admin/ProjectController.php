@@ -10,6 +10,8 @@ use App\Models\TaskMessage;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
+use App\Events\MessageSent;
 
 class ProjectController extends Controller
 {
@@ -172,54 +174,65 @@ class ProjectController extends Controller
 
     public function chatStore(Request $request, $id)
     {
-        $request->validate(['message' => 'required|string']);
-
-        TaskMessage::create([
-            'task_id' => $id,
-            'sender_id' => Auth::id(),
-            'content' => $request->message,
-            'is_read' => false,
-            'attachment_url' => null
+        // Validasi input
+        $request->validate([
+            'message' => 'nullable|string',
+            'attachment' => 'nullable|file|max:5120',
         ]);
 
-        return back();
-    }
-
-    /**
-     * DELETE PROJECT & REFUND TOKEN
-     */
-    public function destroy($id)
-    {
-        $task = Task::with(['user.wallet'])->findOrFail($id);
-
-        if ($task->status !== 'queue') {
-            return back()->with('error', 'Hanya project dengan status Queue yang bisa dihapus.');
+        if (!$request->message && !$request->hasFile('attachment')) {
+            return response()->json(['status' => 'error', 'message' => 'Pesan tidak boleh kosong.'], 422);
         }
 
-        DB::transaction(function () use ($task) {
-            // 1. Refund Token ke Wallet Client
-            if ($task->user && $task->user->wallet) {
-                // A. Kembalikan Saldo
-                $task->user->wallet->increment('balance', $task->toratix_locked);
+        try {
+            DB::beginTransaction();
 
-                // B. CATAT TRANSAKSI HISTORY (FIX)
-                // Ini agar muncul di Transaction History Client
-                Transaction::create([
-                    'wallet_id' => $task->user->wallet->id,
-                    'type' => 'refund', // Tipe refund
-                    'amount' => $task->toratix_locked, // Nilai positif (+)
-                    'description' => 'Refund from cancelled project: ' . $task->title,
-                    'reference_id' => $task->id, // ID Project sebagai referensi (meskipun dihapus, ID tetap tercatat di history)
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            // 1. Handle File Upload (Jika ada)
+            $attachmentPath = null;
+            if ($request->hasFile('attachment')) {
+                $attachmentPath = $request->file('attachment')->store('', 'supabase');
             }
 
-            // 2. Hapus Project
-            $task->delete();
-        });
+            // 2. Simpan Pesan ke Database
+            $msg = TaskMessage::create([
+                'task_id' => $id,
+                'sender_id' => Auth::id(),
+                'content' => $request->message,
+                'is_read' => false,
+                'attachment_url' => $attachmentPath,
+                'created_at' => now(),
+            ]);
 
-        return redirect()->route('admin.projects.index')->with('success', 'Project deleted and tokens refunded to client.');
+            DB::commit();
+
+            // --- REALTIME BROADCAST LOGIC (INI YANG KURANG SEBELUMNYA) ---
+
+            // 3. Render HTML Bubble untuk PENERIMA (Client/Staff) -> $isMe = false
+            // Ini yang akan muncul di layar Client tanpa reload
+            $htmlOthers = View::make('admin.projects.partials.chat-bubble', [
+                'msg' => $msg,
+                'isMe' => false // Di layar penerima, ini bukan pesan 'saya'
+            ])->render();
+
+            // 4. Kirim Sinyal ke Pusher
+            broadcast(new MessageSent($msg, $htmlOthers))->toOthers();
+
+            // 5. Render HTML Bubble untuk PENGIRIM (Admin) -> $isMe = true
+            // Ini untuk ditampilkan langsung di layar Admin via JS
+            $htmlMe = View::make('admin.projects.partials.chat-bubble', [
+                'msg' => $msg,
+                'isMe' => true
+            ])->render();
+
+            // 6. Return JSON (Bukan redirect back)
+            return response()->json([
+                'status' => 'success',
+                'html' => $htmlMe
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**

@@ -1,13 +1,15 @@
 @extends('client.layouts.app')
 
 @section('content')
+    {{-- LOAD PUSHER & ECHO --}}
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
+
     <div class="max-w-4xl mx-auto fade-in h-[calc(100vh-140px)] flex flex-col">
 
-        {{-- HEADER --}}
+        {{-- HEADER (Tetap Sama) --}}
         <div
             class="bg-white px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 rounded-t-3xl shadow-sm z-20 relative">
-
-            {{-- KIRI: Info Project --}}
             <div class="flex items-center gap-4 w-full md:w-auto">
                 <a href="{{ route('client.requests.show', $task->id) }}"
                     class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors flex-shrink-0">
@@ -24,9 +26,8 @@
                 </div>
             </div>
 
-            {{-- KANAN: Status Monitor (Staff & Admin) --}}
+            {{-- Status Monitor --}}
             <div class="flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-full border border-gray-100 shadow-sm">
-
                 {{-- Status Staff --}}
                 <div class="flex items-center gap-2" title="Assigned Staff Status">
                     @if ($isStaffOnline ?? false)
@@ -41,10 +42,8 @@
                         <span class="text-[10px] font-bold text-gray-400 uppercase">Staff OFF</span>
                     @endif
                 </div>
-
                 {{-- Separator --}}
                 <div class="w-px h-4 bg-gray-200"></div>
-
                 {{-- Status Admin --}}
                 <div class="flex items-center gap-2" title="Admin Status">
                     @if ($isAdminOnline ?? false)
@@ -59,13 +58,11 @@
                         <span class="text-[10px] font-bold text-gray-400 uppercase">Admin OFF</span>
                     @endif
                 </div>
-
             </div>
         </div>
 
         {{-- CHAT BODY --}}
         <div class="flex-1 bg-[#F9F8F6] p-6 overflow-y-auto custom-scrollbar" id="chat-container">
-
             {{-- Welcome Message --}}
             <div class="flex justify-center mb-6">
                 <div
@@ -74,178 +71,19 @@
                 </div>
             </div>
 
-            @php
-                $lastDate = null;
-            @endphp
-
-            @forelse($task->messages as $msg)
+            {{-- Load Pesan Lama (SSR) --}}
+            @foreach ($task->messages as $msg)
                 @php
                     $isMe = $msg->sender_id === Auth::id();
-                    $senderRole = $msg->user->role ?? 'unknown';
-
-                    // UPDATED: Date Separator Logic
-                    $msgDate = $msg->created_at->format('Y-m-d');
-                    $showDate = $lastDate !== $msgDate;
-                    $lastDate = $msgDate;
-
-                    // Logic Deteksi Pesan Revisi
-                    $isRevisionMsg = Str::startsWith($msg->content, 'REVISION REQUESTED:');
-                    $cleanContent = str_replace('REVISION REQUESTED:', '', $msg->content);
-
-                    // Logic Warna Badge Role
-                    $roleBadge = match ($senderRole) {
-                        'client' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'label' => 'Client'],
-                        'staff' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'label' => 'Staff'],
-                        'admin' => ['bg' => 'bg-black', 'text' => 'text-white', 'label' => 'Admin'],
-                        default => ['bg' => 'bg-gray-100', 'text' => 'text-gray-600', 'label' => 'User'],
-                    };
+                    // Include Partial Chat Bubble
                 @endphp
-
-                {{-- UPDATED: Render Date Separator if Date Changed --}}
-                @if ($showDate)
-                    <div class="flex justify-center my-6 fade-in">
-                        <span
-                            class="bg-gray-200/50 text-gray-500 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm backdrop-blur-sm">
-                            {{ $msg->created_at->isToday() ? 'Today' : $msg->created_at->translatedFormat('d F Y') }}
-                        </span>
-                    </div>
-                @endif
-
-                {{-- TAMPILAN KHUSUS UNTUK REVISION NOTES --}}
-                @if ($isRevisionMsg)
-                    <div class="flex justify-center mb-6 mt-2 fade-in">
-                        <div
-                            class="bg-orange-50 border border-orange-200 rounded-2xl p-5 max-w-[90%] w-full shadow-sm relative overflow-hidden">
-                            {{-- Decorative Bar --}}
-                            <div class="absolute top-0 left-0 w-1.5 h-full bg-orange-500"></div>
-
-                            <div class="flex items-start gap-3">
-                                <div class="p-2 bg-orange-100 text-orange-600 rounded-lg shrink-0">
-                                    <i data-feather="alert-triangle" class="w-5 h-5"></i>
-                                </div>
-                                <div>
-                                    <h4
-                                        class="font-bold text-orange-800 text-sm uppercase tracking-wide mb-1 flex items-center gap-2">
-                                        Revision Requested
-                                        <span
-                                            class="text-[10px] font-normal text-orange-600 lowercase bg-white/50 px-2 py-0.5 rounded-full border border-orange-100">
-                                            by {{ $msg->user->full_name }}
-                                        </span>
-                                    </h4>
-                                    <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line font-medium">
-                                        {{ trim($cleanContent) }}
-                                    </p>
-                                    <div class="mt-2 flex items-center gap-2 text-[10px] text-orange-400">
-                                        <i data-feather="clock" class="w-3 h-3"></i>
-                                        {{ $msg->created_at->format('d M Y, H:i') }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- TAMPILAN CHAT BIASA (ELSE) --}}
-                @else
-                    <div class="flex w-full mb-4 {{ $isMe ? 'justify-end' : 'justify-start' }}">
-                        <div class="flex max-w-[85%] md:max-w-[75%] gap-3 {{ $isMe ? 'flex-row-reverse' : 'flex-row' }}">
-
-                            {{-- Avatar --}}
-                            <div class="flex-shrink-0">
-                                @if ($isMe)
-                                    <div class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
-                                        <img src="{{ Auth::user()->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->full_name) }}"
-                                            class="w-full h-full object-cover">
-                                    </div>
-                                @else
-                                    <div
-                                        class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden">
-                                        <img src="{{ $msg->user->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($msg->user->full_name) }}"
-                                            class="w-full h-full object-cover">
-                                    </div>
-                                @endif
-                            </div>
-
-                            <div>
-                                {{-- Name & Role Label --}}
-                                <div class="flex items-center gap-2 mb-1 {{ $isMe ? 'justify-end' : 'justify-start' }}">
-                                    @if ($isMe)
-                                        <span class="text-xs text-gray-400 font-bold">You</span>
-                                    @else
-                                        {{-- Badge Role --}}
-                                        <span
-                                            class="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase {{ $roleBadge['bg'] }} {{ $roleBadge['text'] }}">
-                                            {{ $roleBadge['label'] }}
-                                        </span>
-                                        {{-- Nama Pengirim --}}
-                                        <span class="text-xs text-gray-500 font-bold">
-                                            {{ $msg->user->full_name }}
-                                        </span>
-                                    @endif
-                                </div>
-
-                                {{-- Bubble Chat --}}
-                                <div
-                                    class="relative px-4 py-3 shadow-sm text-sm leading-relaxed break-words
-                                    {{ $isMe
-                                        ? 'bg-black text-white rounded-2xl rounded-tr-sm'
-                                        : 'bg-white text-gray-800 border border-gray-200 rounded-2xl rounded-tl-sm' }}">
-
-                                    @if ($msg->content)
-                                        <p>{!! nl2br(e($msg->content)) !!}</p>
-                                    @endif
-
-                                    @if ($msg->attachment_url)
-                                        <div
-                                            class="mt-2 pt-2 border-t {{ $isMe ? 'border-gray-700' : 'border-gray-100' }}">
-                                            @php
-                                                $fileLink = str_starts_with($msg->attachment_url, 'http')
-                                                    ? $msg->attachment_url
-                                                    : \Illuminate\Support\Facades\Storage::disk('supabase')->url(
-                                                        $msg->attachment_url,
-                                                    );
-                                            @endphp
-                                            <a href="{{ $fileLink }}" target="_blank"
-                                                class="flex items-center gap-3 group p-1 rounded hover:bg-white/10 transition-colors">
-                                                <div
-                                                    class="w-8 h-8 rounded bg-opacity-20 flex items-center justify-center {{ $isMe ? 'bg-white text-white' : 'bg-gray-100 text-gray-600' }}">
-                                                    <i data-feather="file" class="w-4 h-4"></i>
-                                                </div>
-                                                <div class="overflow-hidden">
-                                                    <p
-                                                        class="font-bold text-xs truncate max-w-[150px] group-hover:underline">
-                                                        Attachment</p>
-                                                    <p class="text-[9px] opacity-70">Click to open</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <p class="text-[10px] text-gray-400 mt-1 {{ $isMe ? 'text-right' : 'text-left' }}">
-                                    {{ $msg->created_at->format('H:i') }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            @empty
-                {{-- Empty State --}}
-                <div class="flex flex-col items-center justify-center h-full pb-20">
-                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                        <i data-feather="message-square" class="w-6 h-6 text-gray-400"></i>
-                    </div>
-                    <p class="text-gray-500 font-medium text-sm">Belum ada pesan.</p>
-                </div>
-            @endforelse
-
-            <div id="scroll-anchor"></div>
+                @include('client.requests.partials.chat-bubble', ['msg' => $msg, 'isMe' => $isMe])
+            @endforeach
         </div>
 
         {{-- FOOTER INPUT --}}
         <div class="bg-white p-4 border-t border-gray-200 rounded-b-3xl relative z-20">
-
             @if ($task->status === 'completed')
-                {{-- TAMPILAN JIKA PROJECT SELESAI --}}
                 <div
                     class="flex items-center justify-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-500">
                     <i data-feather="lock" class="w-4 h-4"></i>
@@ -253,10 +91,9 @@
                         selesai</span>
                 </div>
             @else
-                {{-- TAMPILAN FORM CHAT (JIKA AKTIF) --}}
-                <form action="{{ route('client.requests.chat.store', $task->id) }}" method="POST"
-                    enctype="multipart/form-data" class="flex items-end gap-3">
-                    @csrf
+                {{-- Form Chat (AJAX) --}}
+                <form id="chatForm" onsubmit="sendMessage(event)" enctype="multipart/form-data"
+                    class="flex items-end gap-3">
 
                     {{-- Upload Button --}}
                     <label
@@ -265,32 +102,30 @@
                         <i data-feather="paperclip" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
                     </label>
 
-                    {{-- Text Area Wrapper --}}
-                    {{-- UPDATED: Removed focus rings on wrapper and textarea --}}
+                    {{-- Text Area --}}
                     <div
                         class="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:bg-white transition-all shadow-sm">
-
-                        {{-- File Preview Indicator --}}
+                        {{-- File Preview --}}
                         <div id="file-preview"
                             class="hidden mb-2 pb-2 border-b border-gray-100 text-xs font-bold text-blue-600 flex items-center gap-2">
                             <div class="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
                                 <i data-feather="file" class="w-3 h-3"></i>
                             </div>
                             <span id="file-name" class="truncate max-w-[200px]">filename.jpg</span>
-                            <button type="button" onclick="clearFile()"
-                                class="ml-auto text-gray-400 hover:text-red-500">
+                            <button type="button" onclick="clearFile()" class="ml-auto text-gray-400 hover:text-red-500">
                                 <i data-feather="x" class="w-3 h-3"></i>
                             </button>
                         </div>
 
-                        <textarea name="message" rows="1" placeholder="Ketik pesan Anda..."
+                        {{-- Input Text --}}
+                        <textarea name="message" id="messageInput" rows="1" placeholder="Ketik pesan Anda..."
                             class="w-full bg-transparent p-0 text-sm text-gray-900 placeholder-gray-400 resize-none max-h-32 leading-relaxed outline-none border-none ring-0 focus:ring-0"
-                            oninput="autoResize(this)"></textarea>
+                            oninput="handleInput(this)"></textarea>
                     </div>
 
                     {{-- Send Button --}}
-                    <button type="submit"
-                        class="p-3 rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg shadow-black/20 flex-shrink-0 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                    <button type="submit" id="submitBtn"
+                        class="p-3 rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg shadow-black/20 flex-shrink-0 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed">
                         <i data-feather="send" class="w-5 h-5"></i>
                     </button>
                 </form>
@@ -298,29 +133,147 @@
         </div>
     </div>
 
-    {{-- Script --}}
+    {{-- SCRIPTS --}}
     <script>
-        // Auto Scroll ke bawah
-        window.onload = function() {
-            scrollToBottom();
-        };
+        const taskId = "{{ $task->id }}";
+        const userId = "{{ Auth::id() }}";
+        const container = document.getElementById('chat-container');
+        const form = document.getElementById('chatForm');
+        let typingTimer;
 
+        // 1. SETUP LARAVEL ECHO (REALTIME)
+        window.Echo = new Echo({
+            broadcaster: 'pusher',
+            key: '{{ env('PUSHER_APP_KEY') }}',
+            cluster: '{{ env('PUSHER_APP_CLUSTER') }}',
+            forceTLS: true
+        });
+
+        // 2. SUBSCRIBE KE CHANNEL CHAT
+        const channel = window.Echo.private('chat.' + taskId);
+
+        channel
+            // A. DENGARKAN PESAN MASUK
+            .listen('.message.sent', (e) => {
+                // Hapus indikator typing jika ada
+                removeTypingIndicator();
+                // Append HTML yang dikirim server
+                container.insertAdjacentHTML('beforeend', e.html);
+                scrollToBottom();
+                feather.replace(); // Refresh icon
+            })
+            // B. DENGARKAN TYPING INDICATOR (Whisper)
+            .listenForWhisper('typing', (e) => {
+                showTypingIndicator(e.name);
+            });
+
+        // 3. SEND MESSAGE VIA AJAX
+        async function sendMessage(e) {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const message = formData.get('message');
+            const attachment = formData.get('attachment');
+
+            if (!message && (!attachment || attachment.size === 0)) return;
+
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnContent = submitBtn.innerHTML;
+
+            // UI Loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>';
+
+            try {
+                const socketId = window.Echo.socketId();
+
+                const response = await fetch("{{ route('client.requests.chat.store', $task->id) }}", {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                        'Accept': 'application/json',
+                        'X-Socket-ID': socketId
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    // Tambahkan pesan sendiri (rendered dari server)
+                    container.insertAdjacentHTML('beforeend', data.html);
+                    scrollToBottom();
+                    feather.replace();
+
+                    // Reset Form
+                    form.reset();
+                    clearFile();
+                    const textarea = document.getElementById('messageInput');
+                    textarea.style.height = 'auto'; // Reset height
+                } else {
+                    alert('Gagal mengirim pesan: ' + (data.message || 'Error'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Koneksi bermasalah.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnContent;
+                feather.replace();
+            }
+        }
+
+        // 4. TYPING INDICATOR LOGIC
+        function handleInput(textarea) {
+            autoResize(textarea); // Resize tinggi textarea
+
+            // Kirim event whisper 'typing'
+            channel.whisper('typing', {
+                name: "{{ Auth::user()->full_name }}"
+            });
+        }
+
+        function showTypingIndicator(name) {
+            // Cek jika indikator sudah ada
+            if (document.getElementById('typing-indicator')) return;
+
+            const html = `
+                <div id="typing-indicator" class="flex items-center gap-2 mb-4 ml-4 fade-in transition-all">
+                    <div class="flex gap-1 bg-gray-100 p-3 rounded-2xl rounded-tl-none border border-gray-200">
+                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                    </div>
+                    <span class="text-[10px] text-gray-400 italic">${name} is typing...</span>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', html);
+            scrollToBottom();
+
+            // Reset timer untuk menghilangkan indikator
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(removeTypingIndicator, 3000);
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
+        }
+
+        // Helpers UI
         function scrollToBottom() {
-            const container = document.getElementById('chat-container');
             if (container) container.scrollTop = container.scrollHeight;
         }
 
-        // Auto resize textarea
         function autoResize(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
         }
 
-        // File check logic
         function checkFile(input) {
             const preview = document.getElementById('file-preview');
             const nameSpan = document.getElementById('file-name');
-
             if (input.files && input.files[0]) {
                 preview.classList.remove('hidden');
                 nameSpan.innerText = input.files[0].name;
@@ -334,5 +287,8 @@
             input.value = '';
             checkFile(input);
         }
+
+        // Init Scroll
+        window.onload = scrollToBottom;
     </script>
 @endsection

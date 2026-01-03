@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\PriceController;
+use Illuminate\Support\Facades\Broadcast;
 
 // Client Controllers
 use App\Http\Controllers\Client\DashboardController;
@@ -116,6 +117,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Support & Settings
         Route::get('/support', [SupportController::class, 'index'])->name('support');
+        Route::get('/support/vektorai', [SupportController::class, 'showAiChat'])->name('support.vektorai');
+        Route::post('support/ai-chat', [SupportController::class, 'chatAi'])->name('support.chat');
         Route::get('/settings', [SettingController::class, 'index'])->name('settings');
         Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
     });
@@ -184,7 +187,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         Route::resource('invoices', App\Http\Controllers\Admin\InvoiceController::class)->only(['index', 'show']);
         Route::put('invoices/{invoice}/paid', [App\Http\Controllers\Admin\InvoiceController::class, 'markAsPaid'])->name('invoices.paid');
         Route::put('invoices/{invoice}/cancel', [App\Http\Controllers\Admin\InvoiceController::class, 'cancel'])->name('invoices.cancel');
-        
+
         // TOKEN MANAGER (NEW)
         Route::get('/tokens', [App\Http\Controllers\Admin\TokenController::class, 'index'])->name('tokens.index');
         Route::post('/tokens/adjust', [App\Http\Controllers\Admin\TokenController::class, 'storeAdjustment'])->name('tokens.adjust');
@@ -260,3 +263,6 @@ Route::group(['prefix' => 'staff', 'as' => 'staff.'], function () {
         Route::put('/settings/password', [StaffSettingController::class, 'updatePassword'])->name('settings.password');
     });
 });
+
+Broadcast::routes();
+require base_path('routes/channels.php');

@@ -11,6 +11,8 @@ use App\Models\Task;
 use App\Models\Transaction;
 use App\Models\Workspace;
 use App\Models\TaskMessage;
+use App\Events\MessageSent;
+use Illuminate\Support\Facades\View;
 
 class RequestController extends Controller
 {
@@ -411,7 +413,7 @@ class RequestController extends Controller
         $task = Task::where('user_id', Auth::id())->findOrFail($id);
 
         if ($task->status === 'completed') {
-            return back()->with('error', 'Project sudah selesai. Obrolan ditutup.');
+            return response()->json(['status' => 'error', 'message' => 'Project sudah selesai.'], 403);
         }
 
         $request->validate([
@@ -420,7 +422,7 @@ class RequestController extends Controller
         ]);
 
         if (!$request->message && !$request->hasFile('attachment')) {
-            return back()->with('error', 'Pesan tidak boleh kosong.');
+            return response()->json(['status' => 'error', 'message' => 'Pesan tidak boleh kosong.'], 422);
         }
 
         try {
@@ -428,26 +430,45 @@ class RequestController extends Controller
 
             $attachmentPath = null;
             if ($request->hasFile('attachment')) {
-                // UPDATE DISINI: Gunakan disk 'supabase'
-                // File akan tersimpan di bucket 'chat-attachments' di Supabase
                 $attachmentPath = $request->file('attachment')->store('', 'supabase');
             }
 
-            TaskMessage::create([
+            $msg = TaskMessage::create([
                 'task_id' => $task->id,
                 'sender_id' => Auth::id(),
                 'content' => $request->message,
-                'attachment_url' => $attachmentPath, // Simpan path-nya saja (misal: asd123hash.jpg)
+                'attachment_url' => $attachmentPath,
                 'is_read' => false,
                 'created_at' => now(),
             ]);
 
             $task->touch();
             DB::commit();
-            return back();
+
+            // --- REALTIME BROADCAST LOGIC ---
+
+            // 1. Render HTML untuk Penerima (Orang lain) -> $isMe = false
+            $htmlOthers = View::make('client.requests.partials.chat-bubble', [
+                'msg' => $msg,
+                'isMe' => false
+            ])->render();
+
+            // 2. Broadcast ke channel (Kecuali pengirim)
+            broadcast(new MessageSent($msg, $htmlOthers))->toOthers();
+
+            // 3. Render HTML untuk Pengirim (Diri sendiri) -> $isMe = true
+            $htmlMe = View::make('client.requests.partials.chat-bubble', [
+                'msg' => $msg,
+                'isMe' => true
+            ])->render();
+
+            return response()->json([
+                'status' => 'success',
+                'html' => $htmlMe
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal: ' . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
 }
