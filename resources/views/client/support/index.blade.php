@@ -27,6 +27,46 @@
             </div>
         </div>
 
+        {{-- VEKTORAI AI CARD (NEW) --}}
+        <div class="max-w-5xl mx-auto mb-8 px-4 md:px-0">
+            <div class="bg-black rounded-3xl p-1 relative overflow-hidden shadow-2xl shadow-purple-500/20 group">
+                <div
+                    class="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 opacity-20 group-hover:opacity-40 transition-opacity duration-500 animate-gradient-xy">
+                </div>
+
+                <div
+                    class="bg-[#0E0E0E] rounded-[22px] p-8 md:p-10 relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div class="flex-1 text-center md:text-left">
+                        <div
+                            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-bold uppercase tracking-wider mb-4">
+                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                            Vektora Intelligence
+                        </div>
+                        <h2 class="text-3xl font-bold text-white mb-3">Tanya <span
+                                class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Vektorai</span>
+                        </h2>
+                        <p class="text-gray-400 text-sm leading-relaxed max-w-lg mx-auto md:mx-0">
+                            Dapatkan jawaban instan 24/7 seputar layanan, status tier, teknis billing, dan panduan project
+                            tanpa perlu menunggu antrian CS.
+                        </p>
+                    </div>
+
+                    <a href="{{ route('client.support.vektorai') }}" class="relative group/btn flex-shrink-0">
+                        <div
+                            class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl blur opacity-30 group-hover/btn:opacity-60 transition duration-200">
+                        </div>
+                        <button
+                            class="relative bg-white text-black px-8 py-4 rounded-xl font-bold flex items-center gap-3 hover:scale-[1.02] transition-transform">
+                            <i data-feather="message-square" class="w-5 h-5"></i>
+                            <span>Chat with AI</span>
+                        </button>
+                    </a>
+                </div>
+
+                <i data-feather="cpu" class="absolute -right-6 -bottom-6 w-48 h-48 text-white opacity-[0.03] rotate-12"></i>
+            </div>
+        </div>
+
         {{-- CONTACT CARDS --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 max-w-5xl mx-auto">
             <a href="https://wa.me/6281234567890" target="_blank"

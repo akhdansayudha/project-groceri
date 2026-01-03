@@ -11,6 +11,9 @@ class Task extends Model
 {
     use HasFactory, HasUuids;
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+    
     protected $fillable = [
         'user_id',
         'workspace_id',

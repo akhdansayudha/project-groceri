@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Deliverable;
 use Illuminate\Support\Facades\DB;
 use App\Models\Transaction;
+use App\Events\MessageSent;
+use Illuminate\Support\Facades\View;
 
 class ProjectController extends Controller
 {
@@ -216,25 +218,62 @@ class ProjectController extends Controller
     {
         $task = Task::where('assignee_id', Auth::id())->findOrFail($id);
 
-        $request->validate([
-            'message' => 'required_without:attachment|nullable|string',
-            'attachment' => 'nullable|file|max:10240', // 10MB
-        ]);
-
-        $attachmentUrl = null;
-        if ($request->hasFile('attachment')) {
-            $attachmentUrl = $request->file('attachment')->store('chat-attachments', 'supabase');
+        if ($task->status === 'completed') {
+            return response()->json(['status' => 'error', 'message' => 'Project closed.'], 403);
         }
 
-        // Simpan Pesan
-        $task->messages()->create([
-            'sender_id' => Auth::id(),
-            'content' => $request->message,
-            'attachment_url' => $attachmentUrl,
-            'is_read' => false,
+        $request->validate([
+            'message' => 'nullable|string',
+            'attachment' => 'nullable|file|max:10240',
         ]);
 
-        return back();
+        if (!$request->message && !$request->hasFile('attachment')) {
+            return response()->json(['status' => 'error', 'message' => 'Message cannot be empty.'], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $attachmentUrl = null;
+            if ($request->hasFile('attachment')) {
+                $attachmentUrl = $request->file('attachment')->store('chat-attachments', 'supabase');
+            }
+
+            // Simpan Pesan
+            $msg = $task->messages()->create([
+                'sender_id' => Auth::id(),
+                'content' => $request->message,
+                'attachment_url' => $attachmentUrl,
+                'is_read' => false,
+            ]);
+
+            DB::commit();
+
+            // --- REALTIME BROADCAST LOGIC ---
+
+            // 1. Render HTML untuk Penerima (Client/Admin) -> $isMe = false
+            $htmlOthers = View::make('staff.projects.partials.chat-bubble', [
+                'msg' => $msg,
+                'isMe' => false
+            ])->render();
+
+            // 2. Broadcast ke channel (Kecuali pengirim)
+            broadcast(new MessageSent($msg, $htmlOthers))->toOthers();
+
+            // 3. Render HTML untuk Pengirim (Staff sendiri) -> $isMe = true
+            $htmlMe = View::make('staff.projects.partials.chat-bubble', [
+                'msg' => $msg,
+                'isMe' => true
+            ])->render();
+
+            return response()->json([
+                'status' => 'success',
+                'html' => $htmlMe
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**

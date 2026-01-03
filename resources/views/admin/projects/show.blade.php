@@ -60,7 +60,8 @@
                     </h3>
                 </div>
 
-                <div class="p-8 space-y-8">
+                <div class="p-8 space-y-6">
+                    {{-- Judul Project --}}
                     <div>
                         <label class="text-[10px] font-bold uppercase text-gray-400 tracking-widest block mb-2">Project
                             Title</label>
@@ -69,6 +70,7 @@
                         </div>
                     </div>
 
+                    {{-- Service & Budget --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="text-[10px] font-bold uppercase text-gray-400 tracking-widest block mb-2">Service
@@ -88,8 +90,69 @@
                         </div>
                     </div>
 
+                    {{-- BRIEF DATA SECTION (NEW) --}}
+                    @php
+                        // Decode JSON brief_data (handling string atau array)
+                        $brief = $task->brief_data;
+                        if (is_string($brief)) {
+                            $brief = json_decode($brief, true);
+                        }
+                        // Pastikan array agar tidak error saat akses key
+                        $brief = $brief ?? [];
+                    @endphp
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                        {{-- 1. Color Tone --}}
+                        <div>
+                            <label class="text-[10px] font-bold uppercase text-gray-400 tracking-widest block mb-2">Color
+                                Tone</label>
+                            <div
+                                class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 h-[46px]">
+                                @if (!empty($brief['color']))
+                                    {{-- Tampilkan kotak warna jika format hex, jika tidak tampilkan text saja --}}
+                                    <div class="w-5 h-5 rounded border border-gray-300 shadow-sm flex-shrink-0"
+                                        style="background-color: {{ $brief['color'] }}"></div>
+                                    <span class="text-sm font-bold text-gray-700 truncate">{{ $brief['color'] }}</span>
+                                @else
+                                    <span class="text-sm font-bold text-gray-400">-</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- 2. Audience --}}
+                        <div>
+                            <label class="text-[10px] font-bold uppercase text-gray-400 tracking-widest block mb-2">Target
+                                Audience</label>
+                            <div
+                                class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 h-[46px] flex items-center">
+                                <span
+                                    class="text-sm font-bold {{ !empty($brief['audience']) ? 'text-gray-700' : 'text-gray-400' }}">
+                                    {{ $brief['audience'] ?? '-' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        {{-- 3. Reference Link --}}
+                        <div>
+                            <label
+                                class="text-[10px] font-bold uppercase text-gray-400 tracking-widest block mb-2">Reference</label>
+                            <div
+                                class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 h-[46px] flex items-center overflow-hidden">
+                                @if (!empty($brief['reference']))
+                                    <a href="{{ $brief['reference'] }}" target="_blank"
+                                        class="text-sm font-bold text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center gap-2 w-full">
+                                        <i data-feather="external-link" class="w-3 h-3 flex-shrink-0"></i>
+                                        {{ $brief['reference'] }}
+                                    </a>
+                                @else
+                                    <span class="text-sm font-bold text-gray-400">-</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- Description --}}
-                    <div>
+                    <div class="pt-2">
                         <label class="text-[10px] font-bold uppercase text-gray-400 tracking-widest block mb-2">Detailed
                             Brief</label>
                         <div
