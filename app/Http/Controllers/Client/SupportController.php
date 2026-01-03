@@ -15,6 +15,7 @@ class SupportController extends Controller
      */
     public function index()
     {
+        // Data FAQ Statis (Tidak berubah)
         $faqs = [
             'Membership & Tiers' => [
                 [
@@ -81,7 +82,7 @@ class SupportController extends Controller
     }
 
     /**
-     * MEMPROSES CHAT DENGAN AI (GOOGLE GEMINI API)
+     * MEMPROSES CHAT DENGAN AI (GOOGLE GEMMA API)
      */
     public function chatAi(Request $request)
     {
@@ -93,46 +94,52 @@ class SupportController extends Controller
         $userQuestion = $request->message;
         $apiKey = env('GEMINI_API_KEY');
 
-        // Cek API Key
         if (!$apiKey) {
             return response()->json(['status' => 'error', 'message' => 'Server Error: API Key AI belum dikonfigurasi.'], 500);
         }
 
-        // 2. Ambil Knowledge Base dari File
+        // 2. DEBUGGING FILE PATH & CONTENT
         $fileName = 'vektora_knowledge.txt';
+        $exists = Storage::disk('local')->exists($fileName);
+        $realPath = Storage::disk('local')->path($fileName); // Cek lokasi asli di Windows
 
-        // Kita gunakan Storage disk 'local' yang mengarah ke folder /storage/app/
-        if (Storage::disk('local')->exists($fileName)) {
+        if ($exists) {
             $contextData = Storage::disk('local')->get($fileName);
-        } else {
-            // Jika file TIDAK ditemukan: Log Error tapi jangan crash
-            Log::error("Gemini Error: File {$fileName} tidak ditemukan di storage/app/. Pastikan file tersebut sudah dibuat secara manual.");
 
-            // Fallback context agar AI tetap bisa merespon sopan
-            $contextData = "Database pengetahuan Vektora sedang tidak tersedia. Harap arahkan user untuk menghubungi Admin Support via WhatsApp jika ada pertanyaan mendesak.";
+            // --- DEBUG LOG (Cek di storage/logs/laravel.log) ---
+            Log::info("DEBUG AI: File Ditemukan!");
+            Log::info("Lokasi: " . $realPath);
+            Log::info("Snippet Isi: " . substr($contextData, 0, 100)); // Lihat 100 huruf pertama
+        } else {
+            // --- DEBUG LOG ERROR ---
+            Log::error("DEBUG AI: File TIDAK Ditemukan!");
+            Log::error("Sistem mencari di: " . $realPath);
+
+            $contextData = "Database pengetahuan Vektora sedang tidak tersedia. Harap arahkan user ke WhatsApp Admin.";
         }
 
-        // 3. Susun Prompt
+        // 3. Susun Prompt (Tetap sama)
         $prompt = "
             Anda adalah 'Vektora AI Assistant' (Vektorai).
-            Jawab pertanyaan user HANYA berdasarkan informasi berikut:
+            Gunakan informasi berikut sebagai satu-satunya sumber pengetahuan Anda:
             
             --- KNOWLEDGE BASE START ---
             $contextData
             --- KNOWLEDGE BASE END ---
             
-            ATURAN:
-            1. Jika jawaban tidak ada di Knowledge Base, katakan jujur: 'Maaf, saya belum memiliki informasi tersebut. Silakan hubungi Admin via WhatsApp.'
-            2. Gunakan bahasa Indonesia yang ramah (Sapa dengan 'Kak').
+            ATURAN PENTING:
+            1. Jawablah pertanyaan user HANYA berdasarkan Knowledge Base di atas.
+            2. Jika informasi tidak ditemukan, katakan: 'Maaf, saya belum memiliki informasi tersebut. Silakan hubungi Admin Support kami.'
+            3. Gunakan bahasa Indonesia yang ramah (Sapa dengan 'Kak').
             
             PERTANYAAN USER: $userQuestion
         ";
 
-        // 4. MODEL AI (Gemini 2.5 Flash)
-        $modelName = 'gemini-2.5-flash';
+        // 4. PILIH MODEL AI
+        $modelName = 'gemma-3-27b-it';
 
         try {
-            // Kirim Request (withoutVerifying untuk Localhost SSL Fix)
+            // Kirim Request
             $response = Http::withoutVerifying()
                 ->withHeaders([
                     'Content-Type' => 'application/json',
@@ -146,13 +153,33 @@ class SupportController extends Controller
                     ]
                 ]);
 
+            // Cek Error Response
             if ($response->failed()) {
-                Log::error("Gemini API Error: " . $response->body());
-                return response()->json(['status' => 'error', 'message' => 'Gagal menghubungi Vektorai (API Error).'], 500);
+                Log::error("Gemma API Error: " . $response->body());
+
+                // Handle Rate Limit (Error 429)
+                if ($response->status() == 429) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Vektorai sedang sibuk (Quota Limit). Mohon tunggu beberapa saat lagi.'
+                    ], 429);
+                }
+
+                // Handle Model Not Found (Error 404)
+                if ($response->status() == 404) {
+                    // Fallback jika gemma-3-27b-it tidak ditemukan, coba gemma-3-4b-it
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Model AI sedang maintenance. Silakan hubungi Admin.'
+                    ], 404);
+                }
+
+                return response()->json(['status' => 'error', 'message' => 'Gagal menghubungi server AI.'], 500);
             }
 
             $json = $response->json();
 
+            // Ambil Jawaban
             if (isset($json['candidates'][0]['content']['parts'][0]['text'])) {
                 $botReply = $json['candidates'][0]['content']['parts'][0]['text'];
                 return response()->json([

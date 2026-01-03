@@ -62,7 +62,7 @@
                 <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Support</p>
                 <div class="space-y-1">
                     <a href="{{ Route::has('client.support') ? route('client.support') : '#' }}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all group font-medium text-gray-500 hover:bg-gray-50 hover:text-black">
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all group font-medium {{ request()->routeIs('client.support.*') ? 'bg-black text-white shadow-lg shadow-black/20' : 'text-gray-500 hover:bg-gray-50 hover:text-black' }}">
                         <i data-feather="message-circle" class="w-5 h-5"></i>
                         <span>Help Center</span>
                     </a>

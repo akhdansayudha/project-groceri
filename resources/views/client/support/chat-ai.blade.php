@@ -24,10 +24,10 @@
                 </div>
             </div>
 
-            {{-- Icon Robot --}}
-            <div
-                class="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-                <i data-feather="cpu" class="w-5 h-5 text-white"></i>
+            {{-- CS Profile Image (Header) --}}
+            <div class="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shadow-sm">
+                <img src="https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/chatbot_logo.jpg"
+                    alt="Vektorai" class="w-full h-full object-cover">
             </div>
         </div>
 
@@ -39,31 +39,58 @@
                 <i data-feather="command" class="w-64 h-64"></i>
             </div>
 
-            {{-- Initial Greeting (Hardcoded for instant load) --}}
-            <div class="flex justify-start mb-6 fade-in relative z-10">
+            {{-- 1. Initial Greeting --}}
+            <div class="flex justify-start mb-4 fade-in relative z-10">
                 <div class="flex max-w-[85%] gap-3">
                     <div class="flex-shrink-0 mt-1">
-                        <div
-                            class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-                            <i data-feather="cpu" class="w-4 h-4 text-white"></i>
-                        </div>
+                        {{-- CS Profile Image (Bubble) --}}
+                        <img src="https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/chatbot_logo.jpg"
+                            class="w-8 h-8 rounded-full shadow-sm border border-white">
                     </div>
                     <div>
                         <span class="text-xs text-gray-500 font-bold ml-1 mb-1 block">Vektorai</span>
                         <div
                             class="bg-white border border-gray-200 text-gray-800 px-5 py-3 rounded-2xl rounded-tl-sm shadow-sm text-sm leading-relaxed">
                             <p>Halo, {{ Auth::user()->full_name ?? 'Kak' }}! 👋</p>
-                            <p class="mt-2">Saya <b>Vektorai</b>, asisten pintar Vektora. Saya sudah mempelajari seluruh
-                                panduan layanan di sini.</p>
-                            <p class="mt-2">Apa yang bisa saya bantu hari ini? Tanyakan tentang harga, revisi, atau cara
-                                order!</p>
+                            <p class="mt-2">Saya <b>Vektorai</b>, asisten pintar Vektora. Saya siap membantu menjawab
+                                pertanyaan seputar layanan, harga, revisi, atau cara order.</p>
                         </div>
-                        <p class="text-[10px] text-gray-400 mt-1 ml-1">Barusan</p>
+                        {{-- Timestamp Removed --}}
                     </div>
                 </div>
             </div>
 
-            {{-- Chat Dynamic Content will be appended here --}}
+            {{-- 2. Rekomendasi Topik (Bubble Kiri) --}}
+            <div class="flex justify-start mb-6 fade-in relative z-10">
+                <div class="flex max-w-[90%] gap-3 ml-11"> {{-- ml-11 agar sejajar dengan teks chat --}}
+                    <div>
+                        <div class="bg-transparent px-1 py-1 rounded-2xl text-sm leading-relaxed">
+                            <p class="text-xs text-gray-500 mb-2 font-medium">Silakan pilih topik yang ingin kamu tanyakan:
+                            </p>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="sendQuickMessage('Bagaimana cara Top Up Token?')"
+                                    class="bg-white border border-gray-200 text-gray-600 text-xs px-3 py-2 rounded-xl hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 transition-all shadow-sm">
+                                    💰 Cara Top Up
+                                </button>
+                                <button onclick="sendQuickMessage('Apa keuntungan Tier Professional?')"
+                                    class="bg-white border border-gray-200 text-gray-600 text-xs px-3 py-2 rounded-xl hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 transition-all shadow-sm">
+                                    👑 Benefit Tier
+                                </button>
+                                <button onclick="sendQuickMessage('Bagaimana kebijakan revisi?')"
+                                    class="bg-white border border-gray-200 text-gray-600 text-xs px-3 py-2 rounded-xl hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 transition-all shadow-sm">
+                                    🔄 Kebijakan Revisi
+                                </button>
+                                <button onclick="sendQuickMessage('Berapa lama estimasi pengerjaan?')"
+                                    class="bg-white border border-gray-200 text-gray-600 text-xs px-3 py-2 rounded-xl hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 transition-all shadow-sm">
+                                    ⏱️ Estimasi Waktu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Chat Content (Dynamic) --}}
         </div>
 
         {{-- INPUT AREA --}}
@@ -100,7 +127,7 @@
             el.style.height = el.scrollHeight + 'px';
         }
 
-        // Handle Enter Key to Send
+        // Handle Enter Key
         function handleEnter(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -116,11 +143,9 @@
             });
         }
 
-        // Form Submit
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const message = input.value.trim();
-            if (!message) return;
+        // --- CORE SEND MESSAGE FUNCTION (Dipisah agar bisa dipanggil tombol rekomendasi) ---
+        async function sendMessageLogic(text) {
+            if (!text) return;
 
             // 1. UI: Disable Input
             input.value = '';
@@ -129,7 +154,7 @@
             sendBtn.disabled = true;
 
             // 2. Append User Message
-            appendUserMessage(message);
+            appendUserMessage(text);
             scrollToBottom();
 
             // 3. Show Typing Indicator
@@ -145,7 +170,7 @@
                         'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify({
-                        message: message
+                        message: text
                     })
                 });
 
@@ -155,13 +180,14 @@
                 document.getElementById(loadingId).remove();
 
                 if (data.status === 'success') {
+                    // Pakai formatter baru
                     appendAiMessage(data.reply);
                 } else {
                     appendAiMessage("Maaf, sistem sedang sibuk. Silakan coba lagi nanti.");
                 }
 
             } catch (error) {
-                document.getElementById(loadingId).remove();
+                document.getElementById(loadingId)?.remove();
                 appendAiMessage("Terjadi kesalahan koneksi. Periksa internet Anda.");
                 console.error(error);
             } finally {
@@ -170,7 +196,21 @@
                 input.focus();
                 scrollToBottom();
             }
+        }
+
+        // Event Listener Form
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = input.value.trim();
+            sendMessageLogic(message);
         });
+
+        // Function untuk Tombol Rekomendasi
+        function sendQuickMessage(text) {
+            sendMessageLogic(text);
+        }
+
+        // --- APPENDERS ---
 
         function appendUserMessage(text) {
             const html = `
@@ -184,29 +224,33 @@
                              <div class="bg-black text-white px-5 py-3 rounded-2xl rounded-tr-sm shadow-md text-sm leading-relaxed text-left">
                                 ${escapeHtml(text)}
                             </div>
-                            <p class="text-[10px] text-gray-400 mt-1 mr-1">You</p>
+                            {{-- Timestamp Removed --}}
                         </div>
                     </div>
                 </div>
             `;
             chatContainer.insertAdjacentHTML('beforeend', html);
+            feather.replace();
         }
 
-        function appendAiMessage(htmlContent) {
+        function appendAiMessage(rawContent) {
+            // Format Markdown (Bold & List) sebelum ditampilkan
+            const formattedContent = formatMarkdown(rawContent);
+
             const html = `
                 <div class="flex justify-start mb-6 fade-in relative z-10">
                     <div class="flex max-w-[85%] gap-3">
                         <div class="flex-shrink-0 mt-1">
-                            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-md">
-                                <i data-feather="cpu" class="w-4 h-4 text-white"></i>
-                            </div>
+                            {{-- CS Profile Image --}}
+                            <img src="https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/chatbot_logo.jpg" 
+                                class="w-8 h-8 rounded-full shadow-sm border border-white">
                         </div>
                         <div>
                             <span class="text-xs text-gray-500 font-bold ml-1 mb-1 block">Vektorai</span>
                             <div class="bg-white border border-gray-200 text-gray-800 px-5 py-3 rounded-2xl rounded-tl-sm shadow-sm text-sm leading-relaxed">
-                                ${htmlContent}
+                                ${formattedContent}
                             </div>
-                            <p class="text-[10px] text-gray-400 mt-1 ml-1">Barusan</p>
+                            {{-- Timestamp Removed --}}
                         </div>
                     </div>
                 </div>
@@ -221,9 +265,8 @@
                 <div id="${id}" class="flex justify-start mb-6 fade-in relative z-10">
                     <div class="flex max-w-[85%] gap-3">
                         <div class="flex-shrink-0 mt-1">
-                             <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-md">
-                                <i data-feather="cpu" class="w-4 h-4 text-white"></i>
-                            </div>
+                            <img src="https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/chatbot_logo.jpg" 
+                                class="w-8 h-8 rounded-full shadow-sm border border-white">
                         </div>
                         <div>
                             <div class="bg-white border border-gray-200 px-4 py-4 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1.5">
@@ -241,10 +284,63 @@
             return id;
         }
 
+        // --- FORMATTERS ---
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML.replace(/\n/g, '<br>');
+        }
+
+        // FORMATTER MARKDOWN (Bold & List)
+        function formatMarkdown(text) {
+            // 1. Escape HTML dasar (aman dari XSS)
+            // Note: Jika text dari server sudah aman/di-escape, step ini bisa disesuaikan.
+            // Kita asumsikan text mentah dari AI perlu formatting.
+
+            // 2. Bold: **text** -> <strong>text</strong>
+            let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-black">$1</strong>');
+
+            // 3. List Handling
+            // Kita split per baris untuk cek apakah itu list
+            let lines = formatted.split('<br>'); // Jika dari controller sudah di nl2br
+            if (lines.length === 1) lines = formatted.split('\n');
+
+            let outputHtml = '';
+
+            lines.forEach(line => {
+                let cleanLine = line.trim();
+
+                if (cleanLine.startsWith('* ')) {
+                    // Bullet Point
+                    let content = cleanLine.substring(2);
+                    outputHtml += `
+                        <div class="flex items-start gap-2 ml-4 mb-1">
+                            <span class="mt-1.5 w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0"></span>
+                            <span>${content}</span>
+                        </div>`;
+                } else if (/^\d+\./.test(cleanLine)) {
+                    // Numbered List (1. bla bla)
+                    // Ambil angka dan isi
+                    let match = cleanLine.match(/^(\d+\.)\s*(.*)/);
+                    if (match) {
+                        outputHtml += `
+                            <div class="flex items-start gap-2 ml-4 mb-1">
+                                <span class="font-bold text-gray-800 min-w-[15px]">${match[1]}</span>
+                                <span>${match[2]}</span>
+                            </div>`;
+                    } else {
+                        outputHtml += `<p class="mb-1">${line}</p>`;
+                    }
+                } else {
+                    // Paragraf biasa
+                    if (cleanLine !== '') {
+                        outputHtml += `<p class="mb-2">${line}</p>`;
+                    }
+                }
+            });
+
+            return outputHtml;
         }
 
         // Init Feather Icons
