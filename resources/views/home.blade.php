@@ -428,21 +428,21 @@
                             'name' => 'Muhammad Naufal Fahrezy',
                             'role' => 'Founder & Creative Director',
                             'img' =>
-                                'https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/6txvaf6txvaf6txv.png',
+                                'https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/foto_fahrezy2.png',
                             'linkedin' => 'https://www.linkedin.com/in/muhammad-naufal-fahrezy',
                         ],
                         [
                             'name' => 'Akhdan Sayudha Laksmana',
                             'role' => 'Head of Technology',
                             'img' =>
-                                'https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/6txvaf6txvaf6txv.png',
+                                'https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/foto_akhdan2.jpeg',
                             'linkedin' => 'https://www.linkedin.com/in/akhdan-sayudha-laksmana',
                         ],
                         [
                             'name' => 'Wahyudi Tri Susanto',
                             'role' => 'Lead Product Designer',
                             'img' =>
-                                'https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/6txvaf6txvaf6txv.png',
+                                'https://azgwfpkdujdvpfxnnieb.supabase.co/storage/v1/object/public/chat-attachments/foto_wahyudi.jpeg',
                             'linkedin' => 'https://www.linkedin.com/in/wahyudi-tri-susanto',
                         ],
                     ];
