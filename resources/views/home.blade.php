@@ -26,6 +26,40 @@
         .service-desc-mobile.active {
             opacity: 1;
         }
+
+        /* Animasi Background Gradient Bergerak */
+        @keyframes gradient-xy {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .animate-gradient-xy {
+            background-size: 200% 200%;
+            animation: gradient-xy 6s ease infinite;
+        }
+
+        /* Animasi Teks Gradient Mengkilap */
+        @keyframes gradient-x {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            100% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .animate-gradient-x {
+            background-size: 200% auto;
+            animation: gradient-x 4s linear infinite;
+        }
     </style>
 
     <section class="h-screen w-full flex flex-col justify-center items-center relative overflow-hidden bg-white">
@@ -46,9 +80,9 @@
                 </a>
 
                 {{-- TOMBOL DESKTOP: Request a Quote (Scroll ke bawah) --}}
-                <a href="#contact-us"
+                <a href="#collaborate"
                     class="hidden md:flex px-8 py-4 rounded-full font-bold btn-invert btn-black hover-target items-center gap-2">
-                    Request a quote <span>👋</span>
+                    Let's Collaborate <span>🤝</span>
                 </a>
             </div>
         </div>
@@ -77,7 +111,6 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                 <div
                     class="reveal rounded-[2rem] aspect-square md:aspect-video relative group hover-target overflow-hidden">
-                    {{-- Ganti URL gambar dengan asset lokal atau CDN yang valid --}}
                     <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop"
                         alt="Vektora Team"
                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
@@ -320,6 +353,20 @@
                                 'text' =>
                                     'Flow aplikasi yang dibuat sangat user-friendly. User kami yang gaptek pun bisa pakai.',
                             ],
+                            [
+                                'name' => 'Sarah Wijaya',
+                                'role' => 'Founder, GlowUp Skin',
+                                'service' => 'Graphic Design',
+                                'text' =>
+                                    "Desain feed Instagram jadi super aesthetic dan rapi. Engagement followers kami langsung naik drastis sejak pakai jasa Vektora.",
+                            ],
+                            [
+                                'name' => 'Rian Hidayat',
+                                'role' => 'CTO, TechNesia',
+                                'service' => 'Web Design',
+                                'text' =>
+                                    "Website baru performanya kenceng dan desainnya futuristik abis. Bikin kredibilitas startup kami makin oke di mata investor.",
+                            ],
                         ];
                     @endphp
 
@@ -353,7 +400,7 @@
         </div>
     </section>
 
-    {{-- SECTION ID TEAM & CTA (Menggantikan Contact Us lama) --}}
+    {{-- SECTION ID TEAM & CTA --}}
     <section id="our-team" class="py-32 px-6 bg-white rounded-t-[4rem]">
         <div class="max-w-7xl mx-auto">
 
@@ -434,40 +481,78 @@
                 @endforeach
             </div>
 
-            {{-- CTA SECTION (Collaboration Invite) --}}
-            <div
-                class="reveal relative overflow-hidden bg-[#111] rounded-[3rem] px-8 py-24 md:p-24 text-center group hover-target">
+            {{-- CTA SECTION (Redesigned) --}}
+            <div id="collaborate" class="reveal relative mt-32 group scroll-mt-10">
 
-                {{-- Decorative Blurred Gradients --}}
-                <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                    <div
-                        class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-600/20 blur-[100px] rounded-full mix-blend-screen">
-                    </div>
-                    <div
-                        class="absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] bg-purple-600/20 blur-[100px] rounded-full mix-blend-screen">
-                    </div>
+                {{-- 1. Outer Glow Container --}}
+                <div
+                    class="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-[3.5rem] blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-gradient-xy">
                 </div>
 
-                <div class="relative z-10 max-w-4xl mx-auto">
-                    <h2 class="text-5xl md:text-8xl font-bold text-white mb-8 tracking-tighter leading-none">
-                        Have an idea? <br>
-                        <span class="text-gray-500 group-hover:text-white transition-colors duration-500">Let's build
-                            it.</span>
-                    </h2>
+                {{-- 2. Main Card Content --}}
+                <div
+                    class="relative bg-[#050505] rounded-[3rem] px-8 py-24 md:p-32 text-center overflow-hidden border border-white/10">
 
-                    <p class="text-gray-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-                        Join hundreds of visionary brands that have transformed their digital presence with Vektora.
-                    </p>
+                    {{-- Background Effects --}}
+                    <div class="absolute inset-0 w-full h-full">
+                        {{-- Grid Pattern --}}
+                        <div
+                            class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
+                        </div>
 
-                    <a href="{{ route('login') }}"
-                        class="inline-flex items-center gap-3 px-10 py-5 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-transform duration-300 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]">
-                        Start Your Project
-                        <i data-feather="arrow-right" class="w-5 h-5"></i>
-                    </a>
+                        {{-- Animated Blobs (Aurora Effect) --}}
+                        <div
+                            class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[120px] animate-pulse">
+                        </div>
+                        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px] animate-pulse"
+                            style="animation-delay: 1s"></div>
+                    </div>
 
-                    <div class="mt-8">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Client Registration
-                            Open</span>
+                    {{-- Content Wrapper --}}
+                    <div class="relative z-10 max-w-5xl mx-auto flex flex-col items-center">
+
+                        {{-- Badge --}}
+                        <div
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8">
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            <span class="text-xs font-bold text-white tracking-widest uppercase">Open for
+                                Collaboration</span>
+                        </div>
+
+                        {{-- Title --}}
+                        <h2 class="text-5xl md:text-8xl font-bold text-white mb-8 tracking-tighter leading-[0.9]">
+                            Have an idea? <br>
+                            <span
+                                class="text-transparent bg-clip-text bg-gradient-to-r from-gray-400 via-white to-gray-400 animate-gradient-x">Let's
+                                build it.</span>
+                        </h2>
+
+                        <p class="text-gray-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
+                            Don't let your vision stay a dream. Join hundreds of visionary brands that have transformed
+                            their digital presence with Vektora.
+                        </p>
+
+                        {{-- Action Buttons --}}
+                        <div class="flex flex-col md:flex-row items-center gap-6">
+                            <a href="{{ route('login') }}"
+                                class="group/btn relative inline-flex items-center gap-3 px-12 py-6 bg-white text-black rounded-full font-bold text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.4)]">
+                                <span class="relative z-10">Start Your Project</span>
+                                <i data-feather="arrow-right"
+                                    class="relative z-10 w-5 h-5 group-hover/btn:translate-x-1 transition-transform"></i>
+                                {{-- Button Hover Fill --}}
+                                <div
+                                    class="absolute inset-0 bg-gray-200 transform scale-x-0 group-hover/btn:scale-x-100 transition-transform origin-left duration-300">
+                                </div>
+                            </a>
+
+                            <a href="https://wa.me/6281234567890" target="_blank"
+                                class="inline-flex items-center gap-3 px-10 py-6 text-white font-bold text-lg hover:text-gray-300 transition-colors group/link">
+                                <span>Consultation first</span>
+                                <i data-feather="message-circle"
+                                    class="w-5 h-5 group-hover/link:rotate-12 transition-transform"></i>
+                            </a>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -477,7 +562,68 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // 1. Inisialisasi Feather Icons
             feather.replace();
+
+            // --- LOGIC TESTIMONIAL CAROUSEL (BARU) ---
+            const track = document.getElementById('testimonialTrack');
+            const btnPrev = document.getElementById('prevTesti');
+            const btnNext = document.getElementById('nextTesti');
+
+            // Cek apakah elemen ada untuk menghindari error
+            if (track && btnPrev && btnNext) {
+
+                // Fungsi Scroll
+                const scrollCarousel = (direction) => {
+                    // Ambil lebar kartu pertama + gap (gap-8 = 32px)
+                    const cardWidth = track.firstElementChild.offsetWidth + 32;
+
+                    if (direction === 'next') {
+                        // Jika sudah di ujung kanan, kembali ke awal
+                        if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 10) {
+                            track.scrollTo({
+                                left: 0,
+                                behavior: 'smooth'
+                            });
+                        } else {
+                            track.scrollBy({
+                                left: cardWidth,
+                                behavior: 'smooth'
+                            });
+                        }
+                    } else {
+                        track.scrollBy({
+                            left: -cardWidth,
+                            behavior: 'smooth'
+                        });
+                    }
+                };
+
+                // Event Listener Tombol
+                btnNext.addEventListener('click', () => scrollCarousel('next'));
+                btnPrev.addEventListener('click', () => scrollCarousel('prev'));
+
+                // --- AUTO SCROLL FEATURE ---
+                let autoScrollInterval;
+
+                const startAutoScroll = () => {
+                    autoScrollInterval = setInterval(() => {
+                        scrollCarousel('next');
+                    }, 4000); // Geser setiap 4 detik
+                };
+
+                const stopAutoScroll = () => {
+                    clearInterval(autoScrollInterval);
+                };
+
+                // Jalankan Auto Scroll saat halaman dimuat
+                startAutoScroll();
+
+                // Berhenti Auto Scroll saat mouse diarahkan ke testimonial (agar user bisa baca)
+                track.addEventListener('mouseenter', stopAutoScroll);
+                // Lanjut Auto Scroll saat mouse keluar
+                track.addEventListener('mouseleave', startAutoScroll);
+            }
 
             // --- SERVICES ACCORDION LOGIC (MOBILE) ---
             window.toggleService = function(element) {
