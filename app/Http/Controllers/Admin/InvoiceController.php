@@ -9,6 +9,7 @@ use App\Models\Wallet;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use App\Models\TokenPrice;
+use App\Models\Tier;
 
 class InvoiceController extends Controller
 {
@@ -91,7 +92,7 @@ class InvoiceController extends Controller
                 'payment_method' => 'manual_admin',
             ]);
 
-            // 2. Logic Token (Sederhana)
+            // 2. Logic Token (Hitung konversi)
             $tokenAmount = 0;
             $prices = DB::table('token_prices')->orderBy('min_qty', 'asc')->get();
 
@@ -115,12 +116,31 @@ class InvoiceController extends Controller
                 }
             }
 
-            // 3. Top Up Wallet
+            // 3. Top Up Wallet & UPDATE TIER
             if ($tokenAmount > 0) {
                 $wallet = Wallet::firstOrCreate(['user_id' => $invoice->user_id]);
+
+                // Tambah saldo
                 $wallet->increment('balance', $tokenAmount);
                 $wallet->increment('total_purchased', $tokenAmount);
 
+                // --- LOGIC UPDATE TIER (BARU DITAMBAHKAN) ---
+                // Ambil total pembelian terbaru
+                $currentTotal = $wallet->fresh()->total_purchased;
+
+                // Cari Tier yang sesuai
+                $newTier = Tier::where('min_toratix', '<=', $currentTotal)
+                    ->where('max_toratix', '>=', $currentTotal)
+                    ->orderBy('min_toratix', 'desc')
+                    ->first();
+
+                // Jika tier ditemukan dan berbeda dengan sekarang, update!
+                if ($newTier && $wallet->current_tier_id !== $newTier->id) {
+                    $wallet->update(['current_tier_id' => $newTier->id]);
+                }
+                // ---------------------------------------------
+
+                // Catat Transaksi
                 Transaction::create([
                     'wallet_id' => $wallet->id,
                     'type' => 'topup',
@@ -133,6 +153,6 @@ class InvoiceController extends Controller
             }
         });
 
-        return back()->with('success', 'Invoice lunas! Token telah ditambahkan ke user.');
+        return back()->with('success', 'Invoice lunas! Token ditambahkan & Tier diperbarui.');
     }
 }

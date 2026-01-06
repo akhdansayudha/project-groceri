@@ -6,6 +6,21 @@
         <p class="text-gray-500 text-sm">Pantau request masuk, progress pengerjaan, dan deadline tim.</p>
     </div>
 
+    {{-- ALERT SUCCESS/ERROR --}}
+    @if (session('success'))
+        <div class="bg-green-50 text-green-700 p-4 rounded-xl mb-6 border border-green-200 flex items-center gap-2 fade-in">
+            <i data-feather="check-circle" class="w-4 h-4"></i>
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="bg-red-50 text-red-700 p-4 rounded-xl mb-6 border border-red-200 flex items-center gap-2 fade-in">
+            <i data-feather="alert-circle" class="w-4 h-4"></i>
+            {{ session('error') }}
+        </div>
+    @endif
+
     {{-- TAB NAVIGATION (FILTER LENGKAP) --}}
     <div class="flex items-center gap-2 mb-6 border-b border-gray-200 overflow-x-auto pb-1 custom-scrollbar">
         {{-- ALL --}}
@@ -24,7 +39,8 @@
         {{-- ACTIVE --}}
         <a href="{{ route('admin.projects.index', ['status' => 'active']) }}"
             class="px-4 py-2 text-sm font-bold border-b-2 whitespace-nowrap transition-colors {{ request('status') == 'active' ? 'border-blue-500 text-black' : 'border-transparent text-gray-500 hover:text-black' }}">
-            Active <span class="ml-1 bg-blue-100 text-blue-700 px-1.5 rounded-md text-[10px]">{{ $counts['active'] }}</span>
+            Active <span
+                class="ml-1 bg-blue-100 text-blue-700 px-1.5 rounded-md text-[10px]">{{ $counts['active'] }}</span>
         </a>
 
         {{-- IN PROGRESS --}}

@@ -282,4 +282,59 @@ class ProjectController extends Controller
 
         return back()->with('success', 'Work submitted for review successfully.');
     }
+
+    /**
+     * DELETE PROJECT (Khusus Status Queue)
+     */
+    public function destroy($id)
+    {
+        $task = Task::with('user.wallet')->findOrFail($id);
+
+        // 1. Validasi: Hanya status 'queue' yang boleh dihapus
+        if ($task->status !== 'queue') {
+            return back()->with('error', 'Hanya project dengan status Queue yang dapat dihapus.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // 2. REFUND TOKEN KE CLIENT (Penting!)
+            // Kembalikan token yang terkunci ke saldo wallet user
+            if ($task->toratix_locked > 0 && $task->user && $task->user->wallet) {
+                $wallet = $task->user->wallet;
+
+                // Kembalikan saldo
+                $wallet->increment('balance', $task->toratix_locked);
+
+                // Catat transaksi refund
+                Transaction::create([
+                    'wallet_id' => $wallet->id,
+                    'type' => 'refund', // Pastikan tipe ini ada di enum/validasi database Anda, atau gunakan 'adjustment'
+                    'amount' => $task->toratix_locked,
+                    'description' => "Refund for Project #{$task->id} (Deleted by Admin)",
+                    'reference_id' => null
+                ]);
+            }
+
+            // 3. HAPUS DATA TERKAIT (Child Records)
+            // Hapus Pesan Chat
+            TaskMessage::where('task_id', $task->id)->delete();
+
+            // Hapus Deliverables (File submission)
+            \App\Models\Deliverable::where('task_id', $task->id)->delete();
+
+            // Hapus Assignees (Jika menggunakan tabel pivot task_assignees)
+            DB::table('task_assignees')->where('task_id', $task->id)->delete();
+
+            // 4. HAPUS TASK UTAMA
+            $task->delete();
+
+            DB::commit();
+
+            return redirect()->route('admin.projects.index')->with('success', 'Project berhasil dihapus dan Token telah dikembalikan ke Client.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus project: ' . $e->getMessage());
+        }
+    }
 }
