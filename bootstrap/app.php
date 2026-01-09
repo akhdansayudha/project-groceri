@@ -15,8 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
 
+        $middleware->trustProxies(at: '*');
+
         // 1. Disable CSRF untuk Webhook Midtrans
-        // Ini penting agar Midtrans bisa mengirim notifikasi ke server Anda
         $middleware->validateCsrfTokens(except: [
             'api/midtrans/callback',
         ]);

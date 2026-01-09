@@ -124,9 +124,9 @@
                         We believe in the power of purposeful design to solve real business challenges. Every line, color,
                         and interaction is crafted with intent, creating experiences that connect and drive impact.
                     </p>
-                    <a href="#"
+                    <a href="#our-team"
                         class="inline-flex items-center gap-2 px-8 py-4 bg-black text-white rounded-full font-bold btn-invert btn-black hover-target">
-                        About us <i data-feather="arrow-right" class="w-4 h-4"></i>
+                        Our Team <i data-feather="arrow-right" class="w-4 h-4"></i>
                     </a>
                 </div>
             </div>
